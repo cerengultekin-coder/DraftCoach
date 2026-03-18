@@ -1,0 +1,57 @@
+{
+  "common": {
+    "appName": "DraftCoach",
+    "badge": "DraftCoach",
+    "file": "File",
+    "status": "Status",
+    "debug": "Raw JSON",
+    "founderLabel": "Founder",
+    "founderName": "Ceren Gültekin",
+    "errors": {
+      "selectFile": "Please choose a GPX file.",
+      "uploadFailed": "Upload failed",
+      "unknown": "Unknown error"
+    }
+  },
+  "home": {
+    "tabTitle": "DraftCoach",
+    "description": "Upload a GPX ride and get a summary plus coaching insights.",
+    "heroTitle": "Upload your ride, analyze instantly",
+    "heroSubtitle": "GPX → distance / duration / speed + coach recommendations.",
+    "uploadCardTitle": "Upload GPX",
+    "uploadHint": "",
+    "chooseFile": "Upload your GPX file",
+    "noFile": "No file selected",
+    "uploadBtn": "Upload & Analyze",
+    "uploading": "Analyzing…",
+    "summaryTitle": "Activity Summary",
+    "summaryHint": "Metrics",
+    "emptyTitle": "No results yet",
+    "emptyText": "Upload a GPX file to see route and metrics here.",
+    "routeTitle": "Route",
+    "routeHint": "Drawn from GPX points",
+    "coachTitle": "AI Coach Insights",
+    "coachHint": "Analyze your ride with AI and get personal recommendations.",
+    "noCardsTitle": "No analysis yet",
+    "noCardsText": "Upload a GPX and click \"Analyze with AI Coach\".",
+    "footerLeft": "DraftCoach",
+    "metrics": {
+      "distance": "Distance",
+      "distanceRaw": "Raw",
+      "duration": "Elapsed time",
+      "movingTime": "Moving:",
+      "movingTimeNA": "Moving time: —",
+      "avgSpeed": "Avg speed",
+      "avgSpeedElapsed": "Elapsed avg",
+      "maxSpeed": "Max speed",
+      "points": "Points",
+      "elevGain": "Elevation gain"
+    },
+    "severity": {
+      "info": "Info",
+      "warning": "Warning",
+      "error": "Critical"
+    },
+    "coachEyebrow": "Personalized Coaching"
+  }
+}

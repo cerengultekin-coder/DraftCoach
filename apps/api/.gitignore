@@ -1,0 +1,5 @@
+apps/api/.venv/
+apps/api/__pycache__/
+apps/api/debug.log
+apps/web/node_modules/
+apps/web/.next/
