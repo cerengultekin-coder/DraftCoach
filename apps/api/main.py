@@ -18,6 +18,9 @@ app.add_middleware(
         "http://localhost:8000",
         "http://127.0.0.1:3000",
         "http://127.0.0.1:8000",
+        "https://draft-coach.vercel.app",
+        "https://draft-coach.vercel.app/en",
+        "https://draft-coach.vercel.app/tr"
     ],
     allow_credentials=True,
     allow_methods=["*"],
