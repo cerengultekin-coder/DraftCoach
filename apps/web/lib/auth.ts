@@ -1,10 +1,5 @@
 import NextAuth from "next-auth";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import sql from "./db";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -12,12 +7,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       id: "strava",
       name: "Strava",
       type: "oauth",
+      checks: ["state"],
+      client: { token_endpoint_auth_method: "client_secret_post" },
       authorization: {
         url: "https://www.strava.com/oauth/authorize",
         params: {
           scope: "read,activity:read_all",
           response_type: "code",
-          approval_prompt: "auto",
+          approval_prompt: "force",
         },
       },
       token: "https://www.strava.com/oauth/token",
@@ -39,37 +36,46 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async signIn({ user, account }: any) {
       if (!account || account.provider !== "strava") return false;
       const expiresAt = new Date((account.expires_at ?? 0) * 1000).toISOString();
-      const { error } = await supabase.from("users").upsert(
-        {
-          strava_id: Number(user.stravaId ?? user.id),
-          name: user.name,
-          email: user.email,
-          profile_photo: user.image,
-          access_token: account.access_token,
-          refresh_token: account.refresh_token,
-          token_expires_at: expiresAt,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "strava_id" }
-      );
-      if (error) {
-        console.error("[auth] Supabase upsert error:", error.message);
+      try {
+        await sql`
+          INSERT INTO users (strava_id, name, email, profile_photo, access_token, refresh_token, token_expires_at, updated_at)
+          VALUES (
+            ${Number(user.stravaId ?? user.id)},
+            ${user.name},
+            ${user.email},
+            ${user.image},
+            ${account.access_token},
+            ${account.refresh_token},
+            ${expiresAt},
+            NOW()
+          )
+          ON CONFLICT (strava_id) DO UPDATE SET
+            name             = EXCLUDED.name,
+            email            = EXCLUDED.email,
+            profile_photo    = EXCLUDED.profile_photo,
+            access_token     = EXCLUDED.access_token,
+            refresh_token    = EXCLUDED.refresh_token,
+            token_expires_at = EXCLUDED.token_expires_at,
+            updated_at       = NOW()
+        `;
+      } catch (err: any) {
+        console.error("[auth] DB upsert error:", err.message);
         return false;
       }
       return true;
     },
     async jwt({ token, account, user }: any) {
       if (account && user) {
-        token.stravaId = Number(user.stravaId ?? user.id);
+        token.stravaId    = Number(user.stravaId ?? user.id);
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
-        token.expiresAt = account.expires_at;
+        token.expiresAt   = account.expires_at;
       }
       return token;
     },
     async session({ session, token }: any) {
       session.user.stravaId = token.stravaId;
-      session.accessToken = token.accessToken;
+      session.accessToken   = token.accessToken;
       return session;
     },
   },

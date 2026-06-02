@@ -1,7 +1,11 @@
+import { createHmac } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase";
+import sql from "@/lib/db";
 
-const VERIFY_TOKEN = process.env.STRAVA_WEBHOOK_VERIFY_TOKEN ?? "draftcoach_webhook";
+const VERIFY_TOKEN = process.env.STRAVA_WEBHOOK_VERIFY_TOKEN;
+if (!VERIFY_TOKEN) {
+  throw new Error("STRAVA_WEBHOOK_VERIFY_TOKEN env var is not set");
+}
 
 // GET — Strava webhook verification challenge
 export async function GET(req: NextRequest) {
@@ -21,10 +25,21 @@ export async function GET(req: NextRequest) {
 // POST — Strava activity event
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const rawBody = await req.text();
+
+    // Verify Strava webhook signature
+    const sig = req.headers.get("x-hub-signature");
+    if (sig) {
+      const expected = "sha1=" + createHmac("sha1", VERIFY_TOKEN!).update(rawBody).digest("hex");
+      if (sig !== expected) {
+        console.warn("[webhook] Invalid signature");
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
+
+    const body = JSON.parse(rawBody);
     console.log("[webhook] Received event:", JSON.stringify(body));
 
-    // Only process activity create/update events
     if (body.object_type !== "activity" || body.aspect_type !== "create") {
       return NextResponse.json({ ok: true, skipped: true });
     }
@@ -32,78 +47,66 @@ export async function POST(req: NextRequest) {
     const stravaActivityId = body.object_id;
     const stravaAthleteId  = body.owner_id;
 
-    // Find user in Supabase
-    const supabase = supabaseAdmin();
-    const { data: user, error: userError } = await supabase
-      .from("users")
-      .select("id, access_token, refresh_token, token_expires_at")
-      .eq("strava_id", stravaAthleteId)
-      .single();
-
-    if (userError || !user) {
+    // Find user
+    const users = await sql`
+      SELECT id, access_token, refresh_token, token_expires_at
+      FROM users
+      WHERE strava_id = ${stravaAthleteId}
+      LIMIT 1
+    `;
+    if (!users.length) {
       console.error("[webhook] User not found for athlete:", stravaAthleteId);
       return NextResponse.json({ ok: true, skipped: true });
     }
+    const user = users[0];
 
     // Check if activity already exists
-    const { data: existing } = await supabase
-      .from("activities")
-      .select("id")
-      .eq("strava_id", stravaActivityId)
-      .single();
-
-    if (existing) {
+    const existing = await sql`
+      SELECT id FROM activities WHERE strava_id = ${stravaActivityId} LIMIT 1
+    `;
+    if (existing.length) {
       console.log("[webhook] Activity already processed:", stravaActivityId);
       return NextResponse.json({ ok: true, skipped: true });
     }
 
     // Fetch activity from Strava API
-    const token = await getValidToken(user, supabase);
+    const token = await getValidToken(user);
     const activityData = await fetchStravaActivity(stravaActivityId, token);
-
     if (!activityData) {
       return NextResponse.json({ ok: true, skipped: true });
     }
 
-    // Only process cycling activities
-    const cyclingTypes = ["Ride", "VirtualRide", "EBikeRide", "Velomobile", "Handcycle"];
-    if (!cyclingTypes.includes(activityData.type)) {
-      console.log("[webhook] Skipping non-cycling activity:", activityData.type);
-      return NextResponse.json({ ok: true, skipped: true });
-    }
+    // Save activity
+    const saved = await sql`
+      INSERT INTO activities (
+        user_id, strava_id, name, type,
+        distance_km, duration_seconds, moving_seconds,
+        avg_speed_kmh, max_speed_kmh, elevation_gain_m,
+        hr_avg, hr_max, started_at, raw_data
+      ) VALUES (
+        ${user.id},
+        ${stravaActivityId},
+        ${activityData.name},
+        ${activityData.type},
+        ${activityData.distance / 1000},
+        ${activityData.elapsed_time},
+        ${activityData.moving_time},
+        ${activityData.average_speed * 3.6},
+        ${activityData.max_speed * 3.6},
+        ${activityData.total_elevation_gain},
+        ${activityData.average_heartrate ?? null},
+        ${activityData.max_heartrate ?? null},
+        ${activityData.start_date},
+        ${JSON.stringify(activityData)}
+      )
+      RETURNING id
+    `;
 
-    // Save activity to Supabase
-    const { data: savedActivity, error: saveError } = await supabase
-      .from("activities")
-      .insert({
-        user_id:          user.id,
-        strava_id:        stravaActivityId,
-        name:             activityData.name,
-        type:             activityData.type,
-        distance_km:      activityData.distance / 1000,
-        duration_seconds: activityData.elapsed_time,
-        moving_seconds:   activityData.moving_time,
-        avg_speed_kmh:    activityData.average_speed * 3.6,
-        max_speed_kmh:    activityData.max_speed * 3.6,
-        elevation_gain_m: activityData.total_elevation_gain,
-        hr_avg:           activityData.average_heartrate ?? null,
-        hr_max:           activityData.max_heartrate ?? null,
-        started_at:       activityData.start_date,
-        raw_data:         activityData,
-      })
-      .select()
-      .single();
+    const activityId = saved[0].id;
+    triggerAnalysis(activityId, user.id, activityData).catch(console.error);
 
-    if (saveError) {
-      console.error("[webhook] Failed to save activity:", saveError.message);
-      return NextResponse.json({ error: saveError.message }, { status: 500 });
-    }
-
-    // Trigger AI analysis in background
-    triggerAnalysis(savedActivity.id, user.id, activityData).catch(console.error);
-
-    console.log("[webhook] Activity saved:", savedActivity.id);
-    return NextResponse.json({ ok: true, activity_id: savedActivity.id });
+    console.log("[webhook] Activity saved:", activityId);
+    return NextResponse.json({ ok: true, activity_id: activityId });
 
   } catch (err: any) {
     console.error("[webhook] Error:", err.message);
@@ -113,14 +116,10 @@ export async function POST(req: NextRequest) {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-async function getValidToken(user: any, supabase: any): Promise<string> {
+async function getValidToken(user: any): Promise<string> {
   const expiresAt = new Date(user.token_expires_at).getTime();
-  const now       = Date.now();
+  if (expiresAt > Date.now() + 60_000) return user.access_token;
 
-  // Token still valid
-  if (expiresAt > now + 60_000) return user.access_token;
-
-  // Refresh token
   const res = await fetch("https://www.strava.com/oauth/token", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -135,16 +134,14 @@ async function getValidToken(user: any, supabase: any): Promise<string> {
   const data = await res.json();
   if (!res.ok) throw new Error(`Token refresh failed: ${JSON.stringify(data)}`);
 
-  // Update in Supabase
-  await supabase
-    .from("users")
-    .update({
-      access_token:    data.access_token,
-      refresh_token:   data.refresh_token,
-      token_expires_at: new Date(data.expires_at * 1000).toISOString(),
-      updated_at:      new Date().toISOString(),
-    })
-    .eq("id", user.id);
+  await sql`
+    UPDATE users SET
+      access_token     = ${data.access_token},
+      refresh_token    = ${data.refresh_token},
+      token_expires_at = ${new Date(data.expires_at * 1000).toISOString()},
+      updated_at       = NOW()
+    WHERE id = ${user.id}
+  `;
 
   return data.access_token;
 }
@@ -154,12 +151,10 @@ async function fetchStravaActivity(activityId: number, token: string) {
     `https://www.strava.com/api/v3/activities/${activityId}`,
     { headers: { Authorization: `Bearer ${token}` } }
   );
-
   if (!res.ok) {
     console.error("[webhook] Strava API error:", res.status);
     return null;
   }
-
   return res.json();
 }
 
@@ -167,6 +162,7 @@ async function triggerAnalysis(activityId: string, userId: string, activityData:
   const apiBase = process.env.INTERNAL_API_URL ?? "http://localhost:8000";
 
   const metrics = {
+    activity_type: activityData.type,
     summary: {
       duration_seconds: activityData.elapsed_time,
       moving_seconds:   activityData.moving_time,
@@ -178,16 +174,13 @@ async function triggerAnalysis(activityId: string, userId: string, activityData:
       avg_speed_kmh: activityData.average_speed * 3.6,
       max_speed_kmh: activityData.max_speed * 3.6,
     },
-    elevation: {
-      elevation_gain_m: activityData.total_elevation_gain,
-    },
+    elevation: { elevation_gain_m: activityData.total_elevation_gain },
     heart_rate: {
       hr_avg: activityData.average_heartrate,
       hr_max: activityData.max_heartrate,
     },
   };
 
-  // Call FastAPI AI coach
   const res = await fetch(`${apiBase}/v1/activities:ai-coach?lang=tr`, {
     method:  "POST",
     headers: { "Content-Type": "application/json" },
@@ -199,7 +192,6 @@ async function triggerAnalysis(activityId: string, userId: string, activityData:
     return;
   }
 
-  // Collect streaming response
   const reader = res.body!.getReader();
   const dec    = new TextDecoder();
   let   buf    = "";
@@ -222,14 +214,10 @@ async function triggerAnalysis(activityId: string, userId: string, activityData:
 
   if (!cards.length) return;
 
-  // Save analysis to Supabase
-  const supabase = supabaseAdmin();
-  await supabase.from("analyses").insert({
-    activity_id: activityId,
-    user_id:     userId,
-    cards,
-    ai_model:    "groq/llama-3.3-70b",
-  });
+  await sql`
+    INSERT INTO analyses (activity_id, user_id, cards, ai_model)
+    VALUES (${activityId}, ${userId}, ${JSON.stringify(cards)}, 'groq/llama-3.3-70b')
+  `;
 
   console.log("[analysis] Saved", cards.length, "cards for activity", activityId);
 }
