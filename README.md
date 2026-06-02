@@ -1,218 +1,209 @@
-# 🚴 DraftCoach — AI-Powered Cycling Analytics
+# DraftCoach — AI Sports Coach
 
-> Upload your GPX file. Get instant route visualization, performance metrics, and personalized AI coaching — all in one place.
+> Connect Strava once. After every activity, Coach GOAT analyzes your data and delivers personalized coaching — performance, recovery, nutrition, technique.
 
-![DraftCoach](https://img.shields.io/badge/DraftCoach-v0.3.0-blue) ![Next.js](https://img.shields.io/badge/Next.js-16-black) ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-green) ![License](https://img.shields.io/badge/license-MIT-orange)
-
----
-
-## ✨ What is DraftCoach?
-
-DraftCoach is a full-stack cycling analytics application that turns raw GPX data into actionable insights. It combines route mapping, performance metrics, interactive charts, and an AI coach (Coach GOAT) that analyzes your ride and gives you real, personalized feedback — not just generic advice.
+![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript)
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python)
+![License](https://img.shields.io/badge/license-All%20Rights%20Reserved-red)
 
 ---
 
-## 🎯 Features
+## Screenshots
 
-- **GPX Upload & Parsing** — Smart parsing with GPS spike filtering, elevation smoothing, and gap detection
-- **Route Map** — Interactive Leaflet map with direction arrows, start/finish markers, and auto-fit bounds
-- **Performance Metrics** — Distance, elapsed time, moving time, avg/max speed, elevation gain/loss, heart rate stats
-- **Interactive Charts** — Elevation, heart rate, and speed profiles with smart contextual notes (Chart.js)
-- **Coach GOAT** — AI coach powered by Groq (llama-3.3-70b) that streams personalized coaching cards in real time
-- **Rule-based Coach Cards** — Instant insights without AI, based on your actual ride data
-- **Dark / Light Mode** — Full theme support
-- **TR / EN Language Support** — Full Turkish and English UI, AI responses in selected language
-- **Daily Usage Limits** — Per-user limit (5 AI analyses/day) + backend Groq usage counter with email alerts via Resend
+<table>
+  <tr>
+    <td><img src="apps/web/public/screenshots/landing-light.png" alt="Landing — Light Mode" /></td>
+    <td><img src="apps/web/public/screenshots/landing-dark.png" alt="Landing — Dark Mode" /></td>
+  </tr>
+  <tr>
+    <td align="center"><em>Landing Page — Light Mode</em></td>
+    <td align="center"><em>Landing Page — Dark Mode</em></td>
+  </tr>
+</table>
 
 ---
 
-## 🛠️ Tech Stack
+## What is DraftCoach?
+
+DraftCoach is a full-stack AI sports coaching application that integrates with Strava via webhook. Every time you finish an activity — cycling, running, swimming, hiking, strength training — **Coach GOAT** automatically analyzes your data and generates personalized coaching cards with no manual action required.
+
+No generic advice. No manual uploads. Real numbers, real insights, delivered automatically.
+
+---
+
+## How It Works
+
+```
+Strava Activity Finished
+        │
+        ▼
+Strava Webhook  ──►  Next.js API Route
+        │                    │
+        │            Save to Neon DB
+        │                    │
+        │            Call FastAPI (Groq)
+        │                    │
+        │            AI Coach generates cards
+        │                    │
+        ▼                    ▼
+   Dashboard  ◄──  Coaching cards saved to DB
+```
+
+1. User connects Strava via OAuth
+2. Strava sends a webhook event when a new activity is created
+3. The Next.js webhook handler fetches full activity data from Strava API
+4. Activity is saved to Neon PostgreSQL
+5. FastAPI calls Groq (llama-3.3-70b) with sport-specific prompts
+6. Personalized coaching cards are saved and displayed on the dashboard
+
+---
+
+## Features
+
+- **Automatic Analysis** — No manual action needed; webhook triggers on every Strava activity
+- **Multi-Sport Support** — Cycling, running, swimming, hiking, strength training and more — each with a tailored AI coach persona
+- **Coach GOAT** — AI coach powered by Groq (llama-3.3-70b-versatile) with sport-specific coaching
+- **Coaching Cards** — Performance, recovery, nutrition, technique, next training plan
+- **Dark / Light Mode** — Full theme support with smooth transitions, persists across navigation
+- **TR / EN Language** — Complete Turkish and English UI with next-intl, URL-based routing (`/tr/`, `/en/`)
+- **Session Security** — Auto logout after 15 min inactivity with green/orange/red warning banners at 10/5/1 min
+- **Neon PostgreSQL** — Serverless database, never pauses (unlike Supabase free tier)
+- **Strava OAuth** — Secure authentication with token refresh handling
+
+---
+
+## Tech Stack
 
 | Layer | Technology |
 |---|---|
-| Frontend | Next.js 16 (Turbopack), TypeScript, Tailwind CSS |
-| Backend | FastAPI (Python), gpxpy |
-| Maps | Leaflet (imperative, SSR-safe) |
-| Charts | Chart.js |
-| AI Coach | Groq API — llama-3.3-70b-versatile |
-| Email Alerts | Resend |
-| Fonts | Oswald, Lexend, Fira Code |
+| Frontend | Next.js 16 (Turbopack), TypeScript |
+| Internationalisation | next-intl (URL prefix routing, TR/EN) |
+| Authentication | NextAuth v5 + Strava OAuth 2.0 |
+| Backend | FastAPI (Python 3.12) |
+| AI | Groq API — llama-3.3-70b-versatile |
+| Database | Neon (serverless PostgreSQL) |
+| Deployment | Vercel (frontend) + ngrok (backend tunnel) |
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 draftcoach/
 ├── apps/
-│   ├── api/                  # FastAPI backend
-│   │   ├── main.py           # All endpoints, GPX parsing, AI coach
+│   ├── api/                          # FastAPI backend
+│   │   ├── main.py                   # AI coach endpoint, Groq streaming, usage tracking
 │   │   └── requirements.txt
-│   └── web/                  # Next.js frontend
+│   └── web/                          # Next.js frontend
 │       ├── app/
-│       │   ├── [locale]/
-│       │   │   └── page.tsx  # Main page
+│       │   ├── [locale]/             # TR / EN routing
+│       │   │   ├── layout.tsx        # Root layout with providers
+│       │   │   ├── page.tsx          # Landing page
+│       │   │   └── dashboard/
+│       │   │       └── page.tsx      # Activity dashboard
+│       │   ├── api/
+│       │   │   ├── activities/       # Activities API (auth-gated)
+│       │   │   └── webhook/strava/   # Strava webhook handler
 │       │   └── components/
-│       │       ├── RouteMap.tsx
-│       │       └── ActivityCharts.tsx
+│       │       ├── ThemeProvider.tsx # Dark/light theme context
+│       │       ├── ThemeToggle.tsx
+│       │       ├── LanguageToggle.tsx
+│       │       └── InactivityGuard.tsx  # Auto-logout after 15 min
+│       ├── i18n/
+│       │   ├── routing.ts
+│       │   └── request.ts
 │       ├── messages/
 │       │   ├── tr.json
 │       │   └── en.json
-│       └── globals.css
+│       └── lib/
+│           ├── auth.ts               # NextAuth + Strava config
+│           └── db.ts                 # Neon SQL client
+└── schema.sql                        # Database schema (users, activities, analyses)
 ```
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
-- Python 3.11+
+- Python 3.12+
 - Node.js 18+
-- [Groq API Key](https://console.groq.com) (free)
-- [Resend API Key](https://resend.com) (free, for email alerts)
+- [Groq API Key](https://console.groq.com) — free
+- [Neon](https://neon.tech) account — free, never pauses
+- Strava API app ([developers.strava.com](https://developers.strava.com))
 
-### Backend Setup
+### 1. Database Setup
+
+Run `schema.sql` in your Neon project's SQL Editor to create the `users`, `activities`, and `analyses` tables.
+
+### 2. Backend
 
 ```bash
 cd apps/api
-python -m venv .venv
-
-# Windows
-.venv\Scripts\activate
-
-# macOS/Linux
-source .venv/bin/activate
-
 pip install -r requirements.txt
-```
-
-Set environment variables:
-
-```powershell
-# Windows (PowerShell)
-$env:GROQ_API_KEY = "gsk_..."
-$env:RESEND_API_KEY = "re_..."
-$env:ALERT_EMAIL_TO = "your@email.com"
-```
-
-```bash
-# macOS/Linux
-export GROQ_API_KEY="gsk_..."
-export RESEND_API_KEY="re_..."
-export ALERT_EMAIL_TO="your@email.com"
-```
-
-Start the backend:
-
-```bash
 uvicorn main:app --reload
+# Runs on http://localhost:8000
 ```
 
-API will be available at `http://localhost:8000`
-
-### Frontend Setup
+### 3. Frontend
 
 ```bash
 cd apps/web
 npm install
-```
-
-Create `.env.local`:
-
-```
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
-```
-
-Start the frontend:
-
-```bash
 npm run dev
+# Runs on http://localhost:3000
 ```
 
-App will be available at `http://localhost:3000`
+### 4. Environment Variables
 
----
+Create `apps/web/.env.local`:
 
-## 🔑 Environment Variables
+```env
+NEXTAUTH_SECRET=your_secret_here
+NEXTAUTH_URL=http://localhost:3000
 
-| Variable | Required | Description |
-|---|---|---|
-| `GROQ_API_KEY` | ✅ | Groq API key for AI coach |
-| `RESEND_API_KEY` | ⚠️ Optional | Resend key for usage alert emails |
-| `ALERT_EMAIL_TO` | ⚠️ Optional | Email address to receive alerts |
+STRAVA_CLIENT_ID=your_client_id
+STRAVA_CLIENT_SECRET=your_client_secret
+STRAVA_WEBHOOK_VERIFY_TOKEN=your_verify_token
 
----
+DATABASE_URL=postgresql://...your_neon_connection_string...
 
-## 📡 API Endpoints
+GROQ_API_KEY=gsk_...
+INTERNAL_API_URL=http://localhost:8000
+```
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/health` | Health check |
-| `POST` | `/v1/activities:upload` | Upload & parse GPX file |
-| `POST` | `/v1/activities:ai-coach` | Get AI coaching cards (streaming SSE) |
-| `GET` | `/v1/usage` | Current Groq API usage stats |
-
-### Upload Response includes:
-- `summary` — duration, point count, timestamps
-- `metrics` — distance, speed, elevation
-- `route` — map segments and bounds
-- `timeseries` — per-point data (elevation, HR, speed, cadence)
-- `coach_cards` — rule-based coaching insights
-
----
-
-## 🤖 Coach GOAT
-
-Coach GOAT is the AI coach powered by Groq's llama-3.3-70b model. It:
-
-- Reads your actual ride data (bpm, km/h, elevation, time)
-- Streams personalized coaching cards in real time
-- Responds in Turkish or English based on your language selection
-- Covers: performance, recovery, nutrition, technique, and next training plan
-- Limited to **5 analyses per user per day** (resets at midnight)
-
----
-
-## 📧 Usage Monitoring
-
-The backend tracks daily Groq API usage and sends email alerts via Resend when:
-- **70%** of daily limit is reached
-- **90%** of daily limit is reached
-
-Configure `RESEND_API_KEY` and `ALERT_EMAIL_TO` to enable this feature.
-
----
-
-## 🌍 Deployment
-
-### Local + ngrok (zero cost)
+### 5. Strava Webhook (local dev)
 
 ```bash
-# Start backend
-uvicorn main:app --host 0.0.0.0 --port 8000
-
-# Expose backend
+# Expose backend with ngrok
 ngrok http 8000
 
-# Update NEXT_PUBLIC_API_BASE_URL in Vercel with ngrok URL
+# Register webhook with Strava
+curl -X POST https://www.strava.com/api/v3/push_subscriptions \
+  -F client_id=YOUR_CLIENT_ID \
+  -F client_secret=YOUR_CLIENT_SECRET \
+  -F callback_url=https://YOUR_NGROK_URL/api/webhook/strava \
+  -F verify_token=YOUR_VERIFY_TOKEN
 ```
 
-### Frontend → Vercel
-### Backend → Render / Railway / Fly.io
+---
+
+## License
+
+Copyright (c) 2026 Ceren Gültekin. All rights reserved.
+
+This repository is publicly visible for portfolio purposes only.
+Using, copying, or distributing this code without explicit written permission from the author is prohibited.
 
 ---
 
-## 📄 License
-
-MIT — feel free to use, modify and distribute.
-
----
-
-## 👤 Author
+## Author
 
 **Ceren Gültekin**
-[LinkedIn](https://www.linkedin.com/in/ceren-gultekin-2a70841b3/)
+[LinkedIn](https://www.linkedin.com/in/ceren-g%C3%BCltekin-2a70841b3/)
 
 ---
 
