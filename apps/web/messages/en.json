@@ -1,57 +1,57 @@
 {
-  "common": {
-    "appName": "DraftCoach",
-    "badge": "DraftCoach",
-    "file": "File",
-    "status": "Status",
-    "debug": "Raw JSON",
-    "founderLabel": "Founder",
-    "founderName": "Ceren Gültekin",
-    "errors": {
-      "selectFile": "Please choose a GPX file.",
-      "uploadFailed": "Upload failed",
-      "unknown": "Unknown error"
+  "landing": {
+    "nav": {
+      "connect": "Connect Strava"
+    },
+    "hero": {
+      "badge": "🐐 Powered by Coach GOAT",
+      "title": "Your personal AI sports coach,",
+      "titleAccent": "activated by every activity.",
+      "sub": "Connect Strava once. After each activity, Coach GOAT analyzes your data and sends you personalized coaching — performance, recovery, nutrition, technique.",
+      "cta": "Connect with Strava",
+      "fine": "Free · No credit card · Works with all your Strava activities"
+    },
+    "features": {
+      "instant": {
+        "title": "Instant Analysis",
+        "desc": "The moment your activity syncs to Strava, Coach GOAT starts analyzing. No manual uploads, no waiting."
+      },
+      "data": {
+        "title": "Real Data, Real Insights",
+        "desc": "Not generic advice. Coach GOAT reads your actual bpm, km/h, elevation — and tells you what it means."
+      },
+      "cards": {
+        "title": "Coaching Cards",
+        "desc": "Performance, recovery, nutrition, technique, next training plan — delivered as clear, actionable cards."
+      },
+      "private": {
+        "title": "Private by Default",
+        "desc": "Your data stays yours. We only read activity data, never post anything to your Strava."
+      }
+    },
+    "cta": {
+      "title": "Ready to train smarter?",
+      "sub": "Join athletes who get AI coaching after every activity."
+    },
+    "footer": {
+      "builtBy": "Built by"
     }
   },
-  "home": {
-    "tabTitle": "DraftCoach",
-    "description": "Upload a GPX ride and get a summary plus coaching insights.",
-    "heroTitle": "Upload your ride, analyze instantly",
-    "heroSubtitle": "GPX → distance / duration / speed + coach recommendations.",
-    "uploadCardTitle": "Upload GPX",
-    "uploadHint": "",
-    "chooseFile": "Upload your GPX file",
-    "noFile": "No file selected",
-    "uploadBtn": "Upload & Analyze",
-    "uploading": "Analyzing…",
-    "summaryTitle": "Activity Summary",
-    "summaryHint": "Metrics",
-    "emptyTitle": "No results yet",
-    "emptyText": "Upload a GPX file to see route and metrics here.",
-    "routeTitle": "Route",
-    "routeHint": "Drawn from GPX points",
-    "coachTitle": "AI Coach Insights",
-    "coachHint": "Analyze your ride with AI and get personal recommendations.",
-    "noCardsTitle": "No analysis yet",
-    "noCardsText": "Upload a GPX and click \"Analyze with AI Coach\".",
-    "footerLeft": "DraftCoach",
-    "metrics": {
-      "distance": "Distance",
-      "distanceRaw": "Raw",
-      "duration": "Elapsed time",
-      "movingTime": "Moving:",
-      "movingTimeNA": "Moving time: —",
-      "avgSpeed": "Avg speed",
-      "avgSpeedElapsed": "Elapsed avg",
-      "maxSpeed": "Max speed",
-      "points": "Points",
-      "elevGain": "Elevation gain"
+  "inactivity": {
+    "warning": "Your session will automatically close in {minutes} minutes due to inactivity.",
+    "stayBtn": "Stay Signed In"
+  },
+  "dashboard": {
+    "loading": "Loading your activities...",
+    "title": "Your Activities",
+    "analyzed": "{count} activities analyzed by Coach GOAT",
+    "activities": "Activities",
+    "hint": "Every activity you finish on Strava is analyzed automatically.",
+    "empty": {
+      "title": "Waiting for your first activity",
+      "desc": "Complete any activity on Strava and Coach GOAT will analyze it automatically."
     },
-    "severity": {
-      "info": "Info",
-      "warning": "Warning",
-      "error": "Critical"
-    },
-    "coachEyebrow": "Personalized Coaching"
+    "goatAnalyzed": "GOAT analyzed",
+    "more": "+{count} more"
   }
 }

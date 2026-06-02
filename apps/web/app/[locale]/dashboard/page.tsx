@@ -1,11 +1,13 @@
 "use client";
 
+import { useTranslations, useLocale } from "next-intl";
 import { useSession, signOut } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Activity, LogOut, Zap, Clock, TrendingUp, Heart } from "lucide-react";
 import Image from "next/image";
-import { supabase } from "@/lib/supabase";
+import { useRouter } from "@/navigation";
+import LanguageToggle from "../../components/LanguageToggle";
+import ThemeToggle from "../../components/ThemeToggle";
 
 type ActivityRow = {
   id: string;
@@ -22,6 +24,8 @@ type ActivityRow = {
 };
 
 export default function Dashboard() {
+  const t = useTranslations("dashboard");
+  const locale = useLocale();
   const { data: session, status } = useSession();
   const router = useRouter();
   const [activities, setActivities] = useState<ActivityRow[]>([]);
@@ -32,21 +36,21 @@ export default function Dashboard() {
   }, [status, router]);
 
   useEffect(() => {
-    if ((session?.user as any)?.stravaId) return;
+    if (!(session?.user as any)?.stravaId) {
+      setLoading(false);
+      return;
+    }
 
     async function fetchActivities() {
-      const { data, error } = await supabase
-        .from("activities")
-        .select(`
-          id, strava_id, name, type, distance_km, duration_seconds,
-          avg_speed_kmh, elevation_gain_m, hr_avg, started_at,
-          analyses(id, cards)
-        `)
-        .order("started_at", { ascending: false })
-        .limit(20);
-
-      if (!error && data) setActivities(data as any);
-      setLoading(false);
+      try {
+        const res = await fetch("/api/activities");
+        if (res.ok) {
+          const data = await res.json();
+          setActivities(data);
+        }
+      } finally {
+        setLoading(false);
+      }
     }
 
     fetchActivities();
@@ -56,7 +60,7 @@ export default function Dashboard() {
     return (
       <div className="dashboard-loading">
         <div className="spinner-large" />
-        <p>Loading your rides...</p>
+        <p>{t("loading")}</p>
       </div>
     );
   }
@@ -71,6 +75,8 @@ export default function Dashboard() {
           <span>DraftCoach</span>
         </div>
         <div className="dash-nav__right">
+          <ThemeToggle />
+          <LanguageToggle />
           {session?.user?.image && (
             <Image
               src={session.user.image}
@@ -81,7 +87,7 @@ export default function Dashboard() {
             />
           )}
           <span className="dash-nav__name">{session?.user?.name}</span>
-          <button className="btn-signout" onClick={() => signOut({ callbackUrl: "/" })}>
+          <button className="btn-signout" onClick={() => signOut({ callbackUrl: `/${locale}/` })}>
             <LogOut size={15} />
           </button>
         </div>
@@ -92,36 +98,36 @@ export default function Dashboard() {
         {/* ── Sidebar ── */}
         <aside className="dash-sidebar">
           <nav className="dash-nav-links">
-            <a className="dash-nav-link active" href="/dashboard">
-              <Activity size={16} /> Activities
+            <a className="dash-nav-link active" href={`/${locale}/dashboard`}>
+              <Activity size={16} /> {t("activities")}
             </a>
           </nav>
           <div className="dash-connect-hint">
-            <p>New rides are analyzed automatically when you finish on Strava.</p>
+            <p>{t("hint")}</p>
           </div>
         </aside>
 
         {/* ── Main ── */}
         <main className="dash-main">
           <div className="dash-header">
-            <h1>Your Rides</h1>
+            <h1>{t("title")}</h1>
             <p className="dash-header__sub">
               {activities.length === 0
-                ? "No rides yet — go for a ride and it will appear here automatically."
-                : `${activities.length} rides analyzed by Coach GOAT`}
+                ? t("empty.desc")
+                : t("analyzed", { count: activities.length })}
             </p>
           </div>
 
           {activities.length === 0 ? (
             <div className="dash-empty">
               <div className="dash-empty__icon">🐐</div>
-              <h2>Waiting for your first ride</h2>
-              <p>Complete a cycling activity on Strava and Coach GOAT will analyze it automatically.</p>
+              <h2>{t("empty.title")}</h2>
+              <p>{t("empty.desc")}</p>
             </div>
           ) : (
             <div className="activity-list">
               {activities.map((a) => (
-                <ActivityCard key={a.id} activity={a} />
+                <ActivityCard key={a.id} activity={a} locale={locale} />
               ))}
             </div>
           )}
@@ -132,10 +138,28 @@ export default function Dashboard() {
   );
 }
 
-function ActivityCard({ activity: a }: { activity: ActivityRow }) {
+const SPORT_EMOJI: Record<string, string> = {
+  Ride: "🚴", VirtualRide: "🚴", EBikeRide: "🚴", Velomobile: "🚴", Handcycle: "🚴",
+  Run: "🏃", VirtualRun: "🏃", TrailRun: "🏃",
+  Swim: "🏊",
+  Walk: "🚶", Hike: "🥾",
+  WeightTraining: "🏋️", Workout: "💪", Crossfit: "💪", RockClimbing: "🧗",
+  Yoga: "🧘",
+  Rowing: "🚣", Kayaking: "🚣", Canoeing: "🚣", Surfing: "🏄", SUP: "🏄",
+  AlpineSki: "⛷️", BackcountrySki: "⛷️", CrossCountrySkiing: "⛷️",
+  Snowboard: "🏂", Snowshoe: "🥾", IceSkate: "⛸️",
+  Tennis: "🎾", Soccer: "⚽", Basketball: "🏀",
+};
+
+function sportEmoji(type: string): string {
+  return SPORT_EMOJI[type] ?? "🏅";
+}
+
+function ActivityCard({ activity: a, locale }: { activity: ActivityRow; locale: string }) {
+  const t = useTranslations("dashboard");
   const router = useRouter();
   const hasAnalysis = a.analyses?.length > 0;
-  const date = new Date(a.started_at).toLocaleDateString("en", {
+  const date = new Date(a.started_at).toLocaleDateString(locale, {
     month: "short", day: "numeric", year: "numeric",
   });
 
@@ -146,13 +170,13 @@ function ActivityCard({ activity: a }: { activity: ActivityRow }) {
     >
       <div className="activity-card__header">
         <div className="activity-card__info">
-          <span className="activity-card__type">{a.type}</span>
+          <span className="activity-card__type">{sportEmoji(a.type)} {a.type}</span>
           <h3 className="activity-card__name">{a.name}</h3>
           <span className="activity-card__date">{date}</span>
         </div>
         {hasAnalysis && (
           <div className="activity-card__badge">
-            <Zap size={12} /> GOAT analyzed
+            <Zap size={12} /> {t("goatAnalyzed")}
           </div>
         )}
       </div>
@@ -189,7 +213,7 @@ function ActivityCard({ activity: a }: { activity: ActivityRow }) {
           ))}
           {a.analyses[0].cards.length > 2 && (
             <div className="activity-card__chip chip--more">
-              +{a.analyses[0].cards.length - 2} more
+              {t("more", { count: a.analyses[0].cards.length - 2 })}
             </div>
           )}
         </div>

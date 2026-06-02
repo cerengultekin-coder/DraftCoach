@@ -1,57 +1,57 @@
 {
-  "common": {
-    "appName": "DraftCoach",
-    "badge": "DraftCoach",
-    "file": "Dosya",
-    "status": "Durum",
-    "debug": "Ham JSON",
-    "founderLabel": "Kurucu",
-    "founderName": "Ceren Gültekin",
-    "errors": {
-      "selectFile": "Lütfen bir GPX dosyası seç.",
-      "uploadFailed": "Yükleme başarısız",
-      "unknown": "Bilinmeyen hata"
+  "landing": {
+    "nav": {
+      "connect": "Strava'ya Bağlan"
+    },
+    "hero": {
+      "badge": "🐐 Coach GOAT ile Güçlendirildi",
+      "title": "Kişisel AI spor koçun,",
+      "titleAccent": "her aktivitenden sonra aktif.",
+      "sub": "Strava'ya bir kez bağlan. Her aktiviteden sonra Coach GOAT verilerini analiz eder ve kişiselleştirilmiş koçluk gönderir — performans, toparlanma, beslenme, teknik.",
+      "cta": "Strava ile Bağlan",
+      "fine": "Ücretsiz · Kredi kartı gerekmez · Tüm Strava aktivitelerin ile çalışır"
+    },
+    "features": {
+      "instant": {
+        "title": "Anında Analiz",
+        "desc": "Aktiviteniz Strava'ya senkronize olur olmaz Coach GOAT analiz etmeye başlar. Manuel yükleme yok, bekleme yok."
+      },
+      "data": {
+        "title": "Gerçek Veri, Gerçek İçgörüler",
+        "desc": "Genel tavsiye değil. Coach GOAT gerçek bpm, km/s, yükseklik verilerini okur — ve ne anlama geldiğini söyler."
+      },
+      "cards": {
+        "title": "Koçluk Kartları",
+        "desc": "Performans, toparlanma, beslenme, teknik, sonraki antrenman planı — net ve aksiyonel kartlar olarak sunulur."
+      },
+      "private": {
+        "title": "Varsayılan Olarak Gizli",
+        "desc": "Veriniz sizin. Sadece aktivite verisini okuruz, Strava'nıza hiçbir şey göndermeyiz."
+      }
+    },
+    "cta": {
+      "title": "Daha akıllı antrenman yapmaya hazır mısın?",
+      "sub": "Her aktiviteden sonra AI koçluk alan sporculara katıl."
+    },
+    "footer": {
+      "builtBy": "tarafından yapıldı"
     }
   },
-  "home": {
-    "tabTitle": "DraftCoach",
-    "description": "GPX yükle, özet ve koç içgörüleri al.",
-    "heroTitle": "Sürüşünü yükle, anında analiz et",
-    "heroSubtitle": "GPX → mesafe / süre / hız + koç önerileri.",
-    "uploadCardTitle": "GPX Yükle",
-    "uploadHint": "",
-    "chooseFile": "GPX dosyanızı yükleyin",
-    "noFile": "Dosya seçilmedi",
-    "uploadBtn": "Yükle & Analiz Et",
-    "uploading": "Analiz ediliyor…",
-    "summaryTitle": "Aktivite Özeti",
-    "summaryHint": "Metrikler",
-    "emptyTitle": "Henüz sonuç yok",
-    "emptyText": "GPX dosyası yükle, rota ve metrikler burada görünür.",
-    "routeTitle": "Rota",
-    "routeHint": "GPX noktalarından çizildi",
-    "coachTitle": "AI Koç Önerileri",
-    "coachHint": "Sürüşünü yapay zeka ile analiz et, kişisel tavsiyeler al.",
-    "noCardsTitle": "Henüz analiz yok",
-    "noCardsText": "GPX yükleyip \"AI Coach ile Analiz Et\" butonuna tıkla.",
-    "footerLeft": "DraftCoach",
-    "metrics": {
-      "distance": "Mesafe",
-      "distanceRaw": "Ham",
-      "duration": "Toplam süre",
-      "movingTime": "Hareket:",
-      "movingTimeNA": "Hareket süresi: —",
-      "avgSpeed": "Ort. hız",
-      "avgSpeedElapsed": "Toplam ort.",
-      "maxSpeed": "Maks hız",
-      "points": "Nokta",
-      "elevGain": "Tırmanış"
+  "inactivity": {
+    "warning": "Hareketsizlik nedeniyle oturumunuz {minutes} dakika içinde otomatik kapanacak.",
+    "stayBtn": "Oturumu Sürdür"
+  },
+  "dashboard": {
+    "loading": "Aktiviteler yükleniyor...",
+    "title": "Aktivitelerim",
+    "analyzed": "{count} aktivite Coach GOAT tarafından analiz edildi",
+    "activities": "Aktiviteler",
+    "hint": "Strava'da bitirdiğin her aktivite otomatik olarak analiz edilir.",
+    "empty": {
+      "title": "İlk aktiviten bekleniyor",
+      "desc": "Strava'da herhangi bir aktivite tamamla, Coach GOAT otomatik olarak analiz etsin."
     },
-    "severity": {
-      "info": "Bilgi",
-      "warning": "Uyarı",
-      "error": "Kritik"
-    },
-    "coachEyebrow": "Kişisel Antrenman"
+    "goatAnalyzed": "GOAT analiz etti",
+    "more": "+{count} daha"
   }
 }

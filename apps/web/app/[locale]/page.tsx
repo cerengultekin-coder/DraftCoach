@@ -1,11 +1,16 @@
 "use client";
 
+import { useTranslations, useLocale } from "next-intl";
 import { signIn, useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useRouter } from "@/navigation";
 import { Zap, BarChart2, Bell, Shield } from "lucide-react";
+import LanguageToggle from "../components/LanguageToggle";
+import ThemeToggle from "../components/ThemeToggle";
 
 export default function LandingPage() {
+  const t = useTranslations("landing");
+  const locale = useLocale();
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -14,6 +19,8 @@ export default function LandingPage() {
       router.push("/dashboard");
     }
   }, [status, router]);
+
+  const handleConnect = () => signIn("strava", { callbackUrl: `/${locale}/dashboard` });
 
   return (
     <main className="landing">
@@ -24,76 +31,66 @@ export default function LandingPage() {
           <WheelIcon />
           <span>DraftCoach</span>
         </div>
-        <button
-          className="btn-connect-sm"
-          onClick={() => signIn("strava", { callbackUrl: "/dashboard" })}
-        >
-          Connect Strava
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <ThemeToggle />
+          <LanguageToggle />
+        </div>
       </header>
 
       {/* ── Hero ── */}
       <section className="hero">
-        <div className="hero__badge">🐐 Powered by Coach GOAT</div>
+        <div className="hero__badge">{t("hero.badge")}</div>
         <h1 className="hero__title">
-          Your AI cycling coach,<br />
-          <span className="hero__title--accent">activated by every ride.</span>
+          {t("hero.title")}<br />
+          <span className="hero__title--accent">{t("hero.titleAccent")}</span>
         </h1>
-        <p className="hero__sub">
-          Connect Strava once. After each activity, Coach GOAT analyzes your data
-          and sends you personalized coaching — performance, recovery, nutrition, technique.
-        </p>
-        <button
-          className="btn-connect-strava"
-          onClick={() => signIn("strava", { callbackUrl: "/dashboard" })}
-        >
+        <p className="hero__sub">{t("hero.sub")}</p>
+        <button className="btn-connect-strava" onClick={handleConnect}>
           <StravaIcon />
-          Connect with Strava
+          {t("hero.cta")}
         </button>
-        <p className="hero__fine">Free · No credit card · Works with your existing rides</p>
+        <p className="hero__fine">{t("hero.fine")}</p>
       </section>
 
       {/* ── Features ── */}
       <section className="features">
         <div className="feature-card">
           <div className="feature-card__icon"><Zap size={22} /></div>
-          <h3>Instant Analysis</h3>
-          <p>The moment your activity syncs to Strava, Coach GOAT starts analyzing. No manual uploads, no waiting.</p>
+          <h3>{t("features.instant.title")}</h3>
+          <p>{t("features.instant.desc")}</p>
         </div>
         <div className="feature-card">
           <div className="feature-card__icon"><BarChart2 size={22} /></div>
-          <h3>Real Data, Real Insights</h3>
-          <p>Not generic advice. Coach GOAT reads your actual bpm, km/h, elevation — and tells you what it means.</p>
+          <h3>{t("features.data.title")}</h3>
+          <p>{t("features.data.desc")}</p>
         </div>
         <div className="feature-card">
           <div className="feature-card__icon"><Bell size={22} /></div>
-          <h3>Coaching Cards</h3>
-          <p>Performance, recovery, nutrition, technique, next training plan — delivered as clear, actionable cards.</p>
+          <h3>{t("features.cards.title")}</h3>
+          <p>{t("features.cards.desc")}</p>
         </div>
         <div className="feature-card">
           <div className="feature-card__icon"><Shield size={22} /></div>
-          <h3>Private by Default</h3>
-          <p>Your data stays yours. We only read activity data, never post anything to your Strava.</p>
+          <h3>{t("features.private.title")}</h3>
+          <p>{t("features.private.desc")}</p>
         </div>
       </section>
 
       {/* ── CTA ── */}
       <section className="cta">
-        <h2>Ready to train smarter?</h2>
-        <p>Join cyclists who get AI coaching after every ride.</p>
-        <button
-          className="btn-connect-strava"
-          onClick={() => signIn("strava", { callbackUrl: "/dashboard" })}
-        >
-          <StravaIcon />
-          Get Started Free
-        </button>
+        <h2>{t("cta.title")}</h2>
+        <p>{t("cta.sub")}</p>
       </section>
 
       {/* ── Footer ── */}
       <footer className="landing-footer">
         <span>© 2026 DraftCoach</span>
-        <span>Built by <a href="https://www.linkedin.com/in/ceren-g%C3%BCltekin-2a70841b3/" target="_blank" rel="noopener noreferrer">Ceren Gültekin</a></span>
+        <span>
+          {t("footer.builtBy")}{" "}
+          <a href="https://www.linkedin.com/in/ceren-g%C3%BCltekin-2a70841b3/" target="_blank" rel="noopener noreferrer">
+            Ceren Gültekin
+          </a>
+        </span>
       </footer>
 
     </main>

@@ -152,7 +152,7 @@ function MiniChart({
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function ActivityCharts({ timeseries, locale = "tr" }: Props) {
-  const pts = downsample(timeseries, 250);
+  const pts = useMemo(() => downsample(timeseries, 250), [timeseries]);
   const hasEle   = pts.some(p => p.ele   !== null);
   const hasHr    = pts.some(p => p.hr    !== null);
   const hasSpeed = pts.some(p => p.speed_kmh !== null);
