@@ -2,40 +2,17 @@
 
 import { useTranslations, useLocale } from "next-intl";
 import { signIn, useSession } from "next-auth/react";
-import { useEffect } from "react";
-import { useRouter } from "@/navigation";
 import { Zap, BarChart2, Bell, Shield } from "lucide-react";
-import LanguageToggle from "../components/LanguageToggle";
-import ThemeToggle from "../components/ThemeToggle";
 
 export default function LandingPage() {
   const t = useTranslations("landing");
   const locale = useLocale();
   const { data: session, status } = useSession();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (status === "authenticated") {
-      router.push("/dashboard");
-    }
-  }, [status, router]);
 
   const handleConnect = () => signIn("strava", { callbackUrl: `/${locale}/dashboard` });
 
   return (
     <main className="landing">
-
-      {/* ── Topbar ── */}
-      <header className="landing-nav">
-        <div className="landing-nav__brand">
-          <WheelIcon />
-          <span>DraftCoach</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <ThemeToggle />
-          <LanguageToggle />
-        </div>
-      </header>
 
       {/* ── Hero ── */}
       <section className="hero">
@@ -45,10 +22,17 @@ export default function LandingPage() {
           <span className="hero__title--accent">{t("hero.titleAccent")}</span>
         </h1>
         <p className="hero__sub">{t("hero.sub")}</p>
-        <button className="btn-connect-strava" onClick={handleConnect}>
-          <StravaIcon />
-          {t("hero.cta")}
-        </button>
+        {status === "authenticated" ? (
+          <a className="btn-connect-strava" href={`/${locale}/dashboard`}>
+            <span>⚡</span>
+            {t("hero.dashboard")}
+          </a>
+        ) : (
+          <button className="btn-connect-strava" onClick={handleConnect}>
+            <StravaIcon />
+            {t("hero.cta")}
+          </button>
+        )}
         <p className="hero__fine">{t("hero.fine")}</p>
       </section>
 
@@ -86,9 +70,12 @@ export default function LandingPage() {
       <footer className="landing-footer">
         <span>© 2026 DraftCoach</span>
         <span>
-          {t("footer.builtBy")}{" "}
           <a href="https://www.linkedin.com/in/ceren-g%C3%BCltekin-2a70841b3/" target="_blank" rel="noopener noreferrer">
-            Ceren Gültekin
+            {t("footer.credit")}
+          </a>
+          {" · "}
+          <a href="https://github.com/cerengultekin-coder/DraftCoach" target="_blank" rel="noopener noreferrer">
+            GitHub
           </a>
         </span>
       </footer>
@@ -97,18 +84,6 @@ export default function LandingPage() {
   );
 }
 
-function WheelIcon() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-      <circle cx="14" cy="14" r="12" stroke="currentColor" strokeWidth="2"/>
-      <circle cx="14" cy="14" r="3" fill="currentColor"/>
-      <line x1="14" y1="2"  x2="14" y2="11"  stroke="currentColor" strokeWidth="1.5"/>
-      <line x1="14" y1="17" x2="14" y2="26"  stroke="currentColor" strokeWidth="1.5"/>
-      <line x1="2"  y1="14" x2="11" y2="14"  stroke="currentColor" strokeWidth="1.5"/>
-      <line x1="17" y1="14" x2="26" y2="14"  stroke="currentColor" strokeWidth="1.5"/>
-    </svg>
-  );
-}
 
 function StravaIcon() {
   return (

@@ -9,6 +9,7 @@
       "titleAccent": "activated by every activity.",
       "sub": "Connect Strava once. After each activity, Coach GOAT analyzes your data and sends you personalized coaching — performance, recovery, nutrition, technique.",
       "cta": "Connect with Strava",
+      "dashboard": "Go to My Activities",
       "fine": "Free · No credit card · Works with all your Strava activities"
     },
     "features": {
@@ -34,7 +35,30 @@
       "sub": "Join athletes who get AI coaching after every activity."
     },
     "footer": {
-      "builtBy": "Built by"
+      "credit": "Built by Ceren Gültekin"
+    }
+  },
+  "activity": {
+    "back": "Back to activities",
+    "loading": "Loading activity...",
+    "notFound": "Activity not found.",
+    "analyze": "Analyze with Coach GOAT",
+    "reanalyze": "Re-analyze",
+    "analyzing": "Coach GOAT is analyzing your activity...",
+    "analyzeFailed": "Analysis failed. Make sure the API server is running.",
+    "noAnalysis": "No analysis yet. Click the button to get your personalized coaching.",
+    "translating": "Translating analysis...",
+    "langMismatch": "This analysis was done in {lang}.",
+    "translateTo": "Translate to {lang}",
+    "limitReached": "Daily limit reached ({limit}/day). Resets at midnight.",
+    "limitRemaining": "{remaining} of {limit} analyses remaining today.",
+    "stats": {
+      "distance": "Distance",
+      "duration": "Duration",
+      "moving": "Moving",
+      "avgSpeed": "Avg Speed",
+      "elevation": "Elevation Gain",
+      "hrAvg": "Avg Heart Rate"
     }
   },
   "inactivity": {
@@ -49,9 +73,13 @@
     "hint": "Every activity you finish on Strava is analyzed automatically.",
     "empty": {
       "title": "Waiting for your first activity",
-      "desc": "Complete any activity on Strava and Coach GOAT will analyze it automatically."
+      "desc": "Complete any activity on Strava and Coach GOAT will analyze it automatically.",
+      "goatQuote": "Every GOAT started somewhere. Your journey begins now."
     },
     "goatAnalyzed": "GOAT analyzed",
-    "more": "+{count} more"
+    "more": "+{count} more",
+    "pending": "awaiting analysis",
+    "loadingMore": "Loading more...",
+    "allLoaded": "All activities loaded 🐐"
   }
 }

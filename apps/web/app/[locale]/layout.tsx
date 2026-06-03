@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import Providers from "../providers";
 import { ThemeProvider } from "../components/ThemeProvider";
+import GlobalHeader from "../components/GlobalHeader";
 import "../global.css";
 
 const oswald   = Oswald({ subsets: ["latin"], variable: "--font-oswald", display: "swap" });
@@ -58,7 +59,10 @@ export default async function LocaleLayout({
       <body className={`${oswald.variable} ${lexend.variable} ${firaCode.variable}`}>
         <NextIntlClientProvider messages={messages}>
           <ThemeProvider>
-            <Providers>{children}</Providers>
+            <Providers>
+              <GlobalHeader />
+              {children}
+            </Providers>
           </ThemeProvider>
         </NextIntlClientProvider>
       </body>

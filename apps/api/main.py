@@ -4,6 +4,9 @@ import json
 import os
 import threading
 from datetime import date
+from dotenv import load_dotenv
+
+load_dotenv()
 
 import httpx
 from fastapi import FastAPI, HTTPException, Query
@@ -147,7 +150,6 @@ def _build_coach_prompt(lang: str, data: dict) -> str:
     activity_type = data.get("activity_type", "")
     sport_key  = _SPORT_MAP.get(activity_type, "default")
     coach_tr, coach_en = _SPORT_COACH[sport_key]
-    coach_role = coach_en if lang == "en" else coach_tr
 
     m  = data.get("metrics", {})
     s  = data.get("summary", {})
@@ -162,82 +164,90 @@ def _build_coach_prompt(lang: str, data: dict) -> str:
     gain     = e.get("elevation_gain_m")
     hr_avg   = hr.get("hr_avg")
     hr_max   = hr.get("hr_max")
-    hr_min   = hr.get("hr_min")
-    pts      = s.get("points_count")
     started  = s.get("started_at", "")
 
     def fmt_dur(sec):
-        if not sec: return "unknown"
+        if not sec: return "bilinmiyor" if lang == "tr" else "unknown"
         h, m2 = divmod(int(sec), 3600)
         m2, ss = divmod(m2, 60)
-        if h: return f"{h}h {m2}m {ss}s"
-        return f"{m2}m {ss}s"
+        if h: return f"{h}s {m2}dk {ss}sn" if lang == "tr" else f"{h}h {m2}m {ss}s"
+        return f"{m2}dk {ss}sn" if lang == "tr" else f"{m2}m {ss}s"
 
-    def f(val, fmt=".1f", fallback="N/A"):
+    def f(val, fmt=".1f", fallback="—"):
         return format(val, fmt) if val is not None else fallback
 
     stats_block = f"""
-Activity type: {activity_type or "Unknown"}
-Activity stats:
-- Distance: {f(dist, ".2f")} km
-- Elapsed time: {fmt_dur(dur_s)}
-- Moving time: {fmt_dur(mov_s)}
-- Average speed: {f(avg_spd)} km/h
-- Max speed: {f(max_spd)} km/h
-- Elevation gain: {f(gain, ".0f")} m
-- Heart rate avg: {f(hr_avg, ".0f")} bpm
-- Heart rate max: {f(hr_max, ".0f")} bpm
-- Heart rate min: {f(hr_min, ".0f")} bpm
-- GPS points: {pts if pts is not None else "N/A"}
-- Started at: {started}
+Spor türü / Activity type: {activity_type or "Unknown"}
+Mesafe / Distance: {f(dist, ".2f")} km
+Toplam süre / Elapsed: {fmt_dur(dur_s)}
+Hareket süresi / Moving: {fmt_dur(mov_s)}
+Ort. hız / Avg speed: {f(avg_spd)} km/h
+Maks. hız / Max speed: {f(max_spd)} km/h
+Tırmanış / Elevation gain: {f(gain, ".0f")} m
+Ort. nabız / Avg HR: {f(hr_avg, ".0f")} bpm
+Maks. nabız / Max HR: {f(hr_max, ".0f")} bpm
+Başlangıç / Started: {started}
 """
 
     if lang == "tr":
-        return f"""Sen {coach_role}. Aşağıdaki aktivite verisini analiz et ve sporcuya kişisel, detaylı ve aksiyonel antrenman tavsiyeleri ver.
+        return f"""Sen {coach_tr} ve aynı zamanda spor beslenmesi uzmanısın. 20 yılı aşkın deneyiminle olimpik sporculara koçluk yaptın. Sporcunun verilerini analiz edip doğrudan, dürüst ve uzman bir antrenör gibi konuş. Genel laflar etme — her öneri bu sporcunun bu antrenmanına özel olsun.
 
+ZORUNLU DİL KURALI: Yanıtın TAMAMEN Türkçe olmalı. Sadece Latin alfabe karakterleri kullan (a-z, A-Z, Türkçe harfler: ğ ş ç ö ü ı İ Ğ Ş Ç Ö Ü). Arapça, Hintçe, Farsça veya başka herhangi bir alfabenin karakterlerini KESINLIKLE kullanma.
+
+Antrenman verisi:
 {stats_block}
 
-Lütfen şu formatta JSON döndür (başka hiçbir şey yazma, sadece JSON):
+YALNIZCA aşağıdaki JSON formatında yanıt ver (başka hiçbir şey yazma):
 {{
   "cards": [
     {{
-      "title": "Kısa başlık (max 6 kelime)",
-      "detail": "Detaylı analiz ve tavsiye (2-4 cümle, spesifik ve aksiyonel)",
-      "severity": "info" | "warning" | "error"
+      "title": "Kısa ve net başlık (max 5 kelime)",
+      "detail": "2-4 cümle. Sporcuyla doğrudan konuş (sen dili). Spesifik sayıları kullan. Neden önemli olduğunu açıkla. Aksiyonel ol.",
+      "severity": "info"
     }}
   ]
 }}
 
-Kurallar:
-- Tam olarak 4-6 kart üret
-- Her kart farklı bir konuya odaklanmalı: performans, toparlanma, beslenme/hidrasyon, teknik, gelecek antrenman planı
-- Spor tipine ({activity_type}) özel tavsiyeler ver
-- Genel tavsiyelerden kaçın — spesifik sayıları (bpm, km, hız) kullan
-- severity: info = pozitif/nötr bilgi, warning = dikkat et, error = ciddi sorun
-- Sadece JSON döndür"""
+Kart konuları (bu sırayla, tam olarak 5 kart):
+1. PERFORMANS — Bu antrenmanda ne yaptı, rakamlar ne anlatıyor, güçlü/zayıf yönler
+2. TOPARLANMA — Kas grubu özelinde toparlanma süresi, uyku kalitesi, aktif dinlenme önerileri
+3. BESLENME & TAKVİYE — Antrenman sonrası beslenme penceresi (30-45dk), spesifik besin önerileri (protein gr, karbonhidrat gr), gerekirse kreatin/elektrolit/omega-3 gibi takviye önerileri
+4. TEKNİK & FORM — Bu spor için spesifik teknik iyileştirme, biomechanics, verimlilik artışı
+5. SONRAKİ ANTRENMAN — Somut hedef (mesafe, hız, nabız zonu) ve ne zaman yapmalı
+
+severity kuralı: info = iyi gidiş / nötr bilgi, warning = dikkat et / iyileştir, error = ciddi risk / durdur
+
+Tekrar: SADECE JSON döndür. Türkçe dışında hiçbir karakter kullanma."""
+
     else:
-        return f"""You are {coach_role}. Analyze the activity data below and provide personalized, detailed, actionable coaching advice.
+        return f"""You are {coach_en} and a certified sports nutritionist. With 20+ years coaching Olympic athletes, you speak directly and honestly like a real personal trainer — no fluff, no generic advice. Every recommendation must be specific to THIS athlete's workout data.
 
+CRITICAL LANGUAGE RULE: Respond ONLY in English. Use ONLY standard Latin alphabet characters (a-z, A-Z). Do NOT use Arabic, Hindi, Persian, or any non-Latin script characters under any circumstances.
+
+Workout data:
 {stats_block}
 
-Return ONLY valid JSON in this exact format (no other text):
+Return ONLY the following JSON format (nothing else):
 {{
   "cards": [
     {{
-      "title": "Short title (max 6 words)",
-      "detail": "Detailed analysis and advice (2-4 sentences, specific and actionable)",
-      "severity": "info" | "warning" | "error"
+      "title": "Short clear title (max 5 words)",
+      "detail": "2-4 sentences. Address athlete directly (you). Reference specific numbers. Explain why it matters. Be actionable.",
+      "severity": "info"
     }}
   ]
 }}
 
-Rules:
-- Generate exactly 4-6 cards
-- Each card should cover a different topic: performance, recovery, nutrition/hydration, technique, next training plan
-- Tailor advice specifically for {activity_type} — avoid generic advice
-- Reference specific numbers (bpm, km, speed) from the data
-- severity: info = positive/neutral insight, warning = pay attention, error = serious concern
-- Return ONLY the JSON"""
+Card topics (in this order, exactly 5 cards):
+1. PERFORMANCE — What the numbers show, strong/weak points, how this compares to good benchmarks
+2. RECOVERY — Muscle-specific recovery time, sleep quality, active recovery recommendations
+3. NUTRITION & SUPPLEMENTS — Post-workout nutrition window (30-45min), specific food recommendations (protein g, carbs g), supplements if relevant (creatine/electrolytes/omega-3/magnesium)
+4. TECHNIQUE & FORM — Sport-specific technical improvement, biomechanics, efficiency gains
+5. NEXT WORKOUT — Concrete target (distance, pace, HR zone) and when to do it
+
+severity rule: info = good progress / neutral insight, warning = pay attention / improve this, error = serious risk / stop
+
+Remember: Return ONLY JSON. No non-Latin characters whatsoever."""
 
 
 @app.post("/v1/activities:ai-coach")
@@ -334,6 +344,70 @@ async def ai_coach(
             yield f"data: {json.dumps({'done': True, 'cards': [], 'parse_error': str(ex), 'raw': full_text[:500]})}\n\n"
 
     return StreamingResponse(stream_cards(), media_type="text/event-stream")
+
+@app.post("/v1/analyses:translate")
+async def translate_analysis(request: dict, lang: str = Query("tr")):
+    """
+    Mevcut analiz kartlarını hedef dile çevirir.
+    Body: { cards: [...] }
+    """
+    api_key = os.environ.get("GROQ_API_KEY", "")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="GROQ_API_KEY not set")
+
+    lang = _lang(lang)
+    cards = request.get("cards", [])
+    if not cards:
+        raise HTTPException(status_code=400, detail="No cards provided")
+
+    target_lang = "Türkçe" if lang == "tr" else "English"
+    lang_rule   = (
+        "ZORUNLU: Yanıt YALNIZCA Türkçe olmalı. Sadece Latin alfabe karakterleri kullan."
+        if lang == "tr" else
+        "CRITICAL: Response must be ONLY in English. Use ONLY standard Latin characters."
+    )
+
+    prompt = f"""{lang_rule}
+
+Translate the following coaching card JSON to {target_lang}.
+- Translate ONLY the "title" and "detail" fields.
+- Keep "severity" values exactly as-is.
+- Keep the exact same JSON structure.
+- Return ONLY the JSON array, nothing else.
+
+{json.dumps(cards, ensure_ascii=False)}"""
+
+    payload = {
+        "model": GROQ_MODEL,
+        "max_tokens": 1500,
+        "stream": False,
+        "messages": [
+            {"role": "system", "content": f"You are a professional translator. Return ONLY valid JSON. No markdown, no extra text."},
+            {"role": "user",   "content": prompt},
+        ],
+    }
+
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        resp = await client.post(GROQ_API_URL, json=payload, headers=headers)
+        if resp.status_code != 200:
+            raise HTTPException(status_code=502, detail="Groq API error")
+
+    raw = resp.json()["choices"][0]["message"]["content"].strip()
+    if raw.startswith("```"):
+        raw = "\n".join(raw.split("\n")[1:])
+    if raw.endswith("```"):
+        raw = "\n".join(raw.split("\n")[:-1])
+
+    try:
+        translated = json.loads(raw.strip())
+        if isinstance(translated, dict) and "cards" in translated:
+            translated = translated["cards"]
+        return {"cards": translated}
+    except Exception as ex:
+        raise HTTPException(status_code=500, detail=f"Parse error: {ex} | raw: {raw[:300]}")
+
 
 @app.get("/v1/usage")
 def get_usage():

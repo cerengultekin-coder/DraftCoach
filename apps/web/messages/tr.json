@@ -9,6 +9,7 @@
       "titleAccent": "her aktivitenden sonra aktif.",
       "sub": "Strava'ya bir kez bağlan. Her aktiviteden sonra Coach GOAT verilerini analiz eder ve kişiselleştirilmiş koçluk gönderir — performans, toparlanma, beslenme, teknik.",
       "cta": "Strava ile Bağlan",
+      "dashboard": "Aktivitelerime Git",
       "fine": "Ücretsiz · Kredi kartı gerekmez · Tüm Strava aktivitelerin ile çalışır"
     },
     "features": {
@@ -34,7 +35,30 @@
       "sub": "Her aktiviteden sonra AI koçluk alan sporculara katıl."
     },
     "footer": {
-      "builtBy": "tarafından yapıldı"
+      "credit": "Ceren Gültekin tarafından yapıldı"
+    }
+  },
+  "activity": {
+    "back": "Aktivitelere dön",
+    "loading": "Aktivite yükleniyor...",
+    "notFound": "Aktivite bulunamadı.",
+    "analyze": "Coach GOAT ile Analiz Et",
+    "reanalyze": "Yeniden Analiz Et",
+    "analyzing": "Coach GOAT aktiviteni analiz ediyor...",
+    "analyzeFailed": "Analiz başarısız. API sunucusunun çalıştığından emin ol.",
+    "noAnalysis": "Henüz analiz yok. Kişisel koçluk almak için butona tıkla.",
+    "translating": "Analiz çevriliyor...",
+    "langMismatch": "Bu analiz {lang} dilinde yapıldı.",
+    "translateTo": "{lang} diline çevir",
+    "limitReached": "Günlük limit doldu ({limit}/gün). Gece yarısı sıfırlanır.",
+    "limitRemaining": "Bugün {remaining}/{limit} analiz hakkın kaldı.",
+    "stats": {
+      "distance": "Mesafe",
+      "duration": "Süre",
+      "moving": "Hareket",
+      "avgSpeed": "Ort. Hız",
+      "elevation": "Tırmanış",
+      "hrAvg": "Ort. Nabız"
     }
   },
   "inactivity": {
@@ -49,9 +73,13 @@
     "hint": "Strava'da bitirdiğin her aktivite otomatik olarak analiz edilir.",
     "empty": {
       "title": "İlk aktiviten bekleniyor",
-      "desc": "Strava'da herhangi bir aktivite tamamla, Coach GOAT otomatik olarak analiz etsin."
+      "desc": "Strava'da herhangi bir aktivite tamamla, Coach GOAT otomatik olarak analiz etsin.",
+      "goatQuote": "GOAT olmak bir gün başlar. O gün bugün olabilir."
     },
     "goatAnalyzed": "GOAT analiz etti",
-    "more": "+{count} daha"
+    "more": "+{count} daha",
+    "pending": "analiz bekliyor",
+    "loadingMore": "Daha fazla yükleniyor...",
+    "allLoaded": "Tüm aktiviteler yüklendi 🐐"
   }
 }
