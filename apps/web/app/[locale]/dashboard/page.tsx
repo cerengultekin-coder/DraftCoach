@@ -33,6 +33,7 @@ export default function Dashboard() {
   const [page, setPage]               = useState(1);
   const [hasMore, setHasMore]         = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [total, setTotal]             = useState<number>(0);
   const sentinelRef                   = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -53,13 +54,15 @@ export default function Dashboard() {
           setImporting(true);
           await fetch("/api/activities/import", { method: "POST" });
           const res2  = await fetch("/api/activities?page=1");
-          const json2 = res2.ok ? await res2.json() : { activities: [], hasMore: false };
+          const json2 = res2.ok ? await res2.json() : { activities: [], hasMore: false, total: 0 };
           setActivities(json2.activities);
           setHasMore(json2.hasMore);
+          setTotal(json2.total ?? 0);
           setImporting(false);
         } else {
           setActivities(json.activities);
           setHasMore(json.hasMore);
+          setTotal(json.total ?? 0);
         }
       } finally {
         setLoading(false);
@@ -121,7 +124,7 @@ export default function Dashboard() {
             </button>
             <div className="dash-user__avatar-wrap">
               {session?.user?.image && (
-                <Image src={session.user.image} alt="" width={80} height={80} className="dash-avatar" />
+                <Image src={session.user.image} alt="" width={92} height={92} className="dash-avatar" />
               )}
               <span className="dash-user__strava-dot" title="Strava bağlı">🔗</span>
             </div>
@@ -139,10 +142,10 @@ export default function Dashboard() {
             </a>
           </nav>
 
-          {activities.length > 0 && (
+          {total > 0 && (
             <div className="dash-stats-mini">
               <div className="dash-stats-mini__item">
-                <span className="dash-stats-mini__val">{activities.length}</span>
+                <span className="dash-stats-mini__val">{total}</span>
                 <span className="dash-stats-mini__label">aktivite</span>
               </div>
               <div className="dash-stats-mini__divider" />
@@ -177,8 +180,8 @@ export default function Dashboard() {
           ) : (
             <>
               <div className="activity-list">
-                {activities.map((a) => (
-                  <ActivityCard key={a.id} activity={a} locale={locale} />
+                {activities.map((a, i) => (
+                  <ActivityCard key={a.id} activity={a} locale={locale} index={i} />
                 ))}
               </div>
 
@@ -202,7 +205,7 @@ export default function Dashboard() {
   );
 }
 
-function ActivityCard({ activity: a, locale }: { activity: ActivityRow; locale: string }) {
+function ActivityCard({ activity: a, locale, index }: { activity: ActivityRow; locale: string; index: number }) {
   const t = useTranslations("dashboard");
   const router = useRouter();
   const hasAnalysis = a.analyses?.length > 0;
@@ -212,7 +215,7 @@ function ActivityCard({ activity: a, locale }: { activity: ActivityRow; locale: 
   return (
     <div
       className={`activity-card ${hasAnalysis ? "has-analysis" : ""}`}
-      style={{ "--sport-color": color } as any}
+      style={{ "--sport-color": color, animationDelay: `${(index % 5) * 0.06}s` } as any}
       onClick={() => router.push(`/activity/${a.id}`)}
     >
       <div className="activity-card__sport-bar" />

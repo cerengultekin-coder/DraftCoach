@@ -12,6 +12,13 @@ export async function GET(req: NextRequest) {
   const page   = Math.max(1, parseInt(req.nextUrl.searchParams.get("page") ?? "1"));
   const offset = (page - 1) * PAGE_SIZE;
 
+  const userId = `(SELECT id FROM users WHERE strava_id = ${stravaId} LIMIT 1)`;
+
+  const [{ total }] = await sql`
+    SELECT COUNT(*)::int AS total FROM activities
+    WHERE user_id = (SELECT id FROM users WHERE strava_id = ${stravaId} LIMIT 1)
+  `;
+
   const activities = await sql`
     SELECT
       a.id, a.strava_id, a.name, a.type,
@@ -30,5 +37,5 @@ export async function GET(req: NextRequest) {
     LIMIT ${PAGE_SIZE} OFFSET ${offset}
   `;
 
-  return NextResponse.json({ activities, hasMore: activities.length === PAGE_SIZE, page });
+  return NextResponse.json({ activities, hasMore: activities.length === PAGE_SIZE, page, total });
 }
