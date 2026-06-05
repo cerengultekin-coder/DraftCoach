@@ -107,12 +107,12 @@ export default function ActivityDetailPage() {
       }
       if (!res.ok) throw new Error();
 
-      const { id, cards, ai_model, created_at, remaining: rem, limit } = await res.json();
+      const { id, cards, ai_model, lang, created_at, remaining: rem, limit } = await res.json();
       setRemaining(rem);
       if (limit) setDailyLimit(limit);
       setActivity(prev => prev ? {
         ...prev,
-        analyses: [{ id, cards, ai_model, created_at }, ...prev.analyses],
+        analyses: [{ id, cards, ai_model, lang: lang ?? locale, created_at: created_at ?? new Date().toISOString() }, ...prev.analyses],
       } : prev);
     } catch {
       setError("analyze_failed");

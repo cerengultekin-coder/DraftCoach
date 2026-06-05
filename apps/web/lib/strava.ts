@@ -5,9 +5,10 @@ type UserToken = {
   access_token: string;
   refresh_token: string;
   token_expires_at: string;
+  [key: string]: any;
 };
 
-export async function getValidToken(user: UserToken): Promise<string> {
+export async function getValidToken(user: Record<string, any>): Promise<string> {
   const expiresAt = new Date(user.token_expires_at).getTime();
   if (expiresAt > Date.now() + 60_000) return user.access_token;
 
