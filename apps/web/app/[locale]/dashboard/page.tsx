@@ -2,8 +2,8 @@
 
 import { useTranslations, useLocale } from "next-intl";
 import { useSession, signOut } from "next-auth/react";
-import { useEffect, useRef, useState, useCallback } from "react";
-import { Activity, LogOut, Clock, TrendingUp, Heart, ChevronRight } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import { Activity, LogOut, Clock, TrendingUp, Heart, ChevronRight, ChevronLeft } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "@/navigation";
 import { sportEmoji, sportColor } from "@/lib/sports";
@@ -27,79 +27,68 @@ export default function Dashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  const [activities, setActivities]   = useState<ActivityRow[]>([]);
-  const [loading, setLoading]         = useState(true);
-  const [importing, setImporting]     = useState(false);
-  const [page, setPage]               = useState(1);
-  const [hasMore, setHasMore]         = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [total, setTotal]             = useState<number>(0);
-  const sentinelRef                   = useRef<HTMLDivElement>(null);
+  const [activities, setActivities]     = useState<ActivityRow[]>([]);
+  const [loading, setLoading]           = useState(true);
+  const [importing, setImporting]       = useState(false);
+  const [pageLoading, setPageLoading]   = useState(false);
+  const [page, setPage]                 = useState(1);
+  const [totalPages, setTotalPages]     = useState(1);
+  const [total, setTotal]               = useState(0);
+  const [totalAnalyzed, setTotalAnalyzed] = useState(0);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/");
   }, [status, router]);
 
-  // Initial load
+  const fetchPage = useCallback(async (p: number) => {
+    const res = await fetch(`/api/activities?page=${p}`);
+    if (!res.ok) return null;
+    return res.json();
+  }, []);
+
+  // Initial load (+ first-time import)
   useEffect(() => {
     if (!(session?.user as any)?.stravaId) { setLoading(false); return; }
 
     async function init() {
       try {
-        const res  = await fetch("/api/activities?page=1");
-        if (!res.ok) return;
-        const json = await res.json();
-
-        if (json.activities.length === 0) {
+        let json = await fetchPage(1);
+        if (json && json.activities.length === 0) {
           setImporting(true);
           await fetch("/api/activities/import", { method: "POST" });
-          const res2  = await fetch("/api/activities?page=1");
-          const json2 = res2.ok ? await res2.json() : { activities: [], hasMore: false, total: 0 };
-          setActivities(json2.activities);
-          setHasMore(json2.hasMore);
-          setTotal(json2.total ?? 0);
+          json = await fetchPage(1);
           setImporting(false);
-        } else {
+        }
+        if (json) {
           setActivities(json.activities);
-          setHasMore(json.hasMore);
           setTotal(json.total ?? 0);
+          setTotalAnalyzed(json.totalAnalyzed ?? 0);
+          setTotalPages(json.totalPages ?? 1);
         }
       } finally {
         setLoading(false);
       }
     }
     init();
-  }, [session]);
+  }, [session, fetchPage]);
 
-  // Load next page
-  const loadMore = useCallback(async () => {
-    if (loadingMore || !hasMore) return;
-    setLoadingMore(true);
-    const next = page + 1;
+  const goToPage = useCallback(async (p: number) => {
+    if (p < 1 || p > totalPages || p === page || pageLoading) return;
+    setPageLoading(true);
     try {
-      const res  = await fetch(`/api/activities?page=${next}`);
-      const json = await res.json();
-      setActivities(prev => [...prev, ...json.activities]);
-      setHasMore(json.hasMore);
-      setPage(next);
+      const json = await fetchPage(p);
+      if (json) {
+        setActivities(json.activities);
+        setTotal(json.total ?? total);
+        setTotalAnalyzed(json.totalAnalyzed ?? totalAnalyzed);
+        setTotalPages(json.totalPages ?? totalPages);
+        setPage(p);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
     } finally {
-      setLoadingMore(false);
+      setPageLoading(false);
     }
-  }, [page, hasMore, loadingMore]);
-
-  // IntersectionObserver — load more when sentinel is visible
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      (entries) => { if (entries[0].isIntersecting) loadMore(); },
-      { threshold: 0.1 }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [loadMore]);
-
-  const analyzedCount = activities.filter(a => a.analyses?.length > 0).length;
+  }, [totalPages, page, pageLoading, fetchPage, total, totalAnalyzed]);
 
   if (status === "loading" || loading) {
     return (
@@ -131,7 +120,7 @@ export default function Dashboard() {
             <div className="dash-user__info">
               <span className="dash-user__name">{session?.user?.name}</span>
               <span className="dash-user__sub">
-                {analyzedCount > 0 ? `${analyzedCount} 🐐 analiz` : "Strava bağlı"}
+                {totalAnalyzed > 0 ? `${totalAnalyzed} 🐐 analiz` : "Strava bağlı"}
               </span>
             </div>
           </div>
@@ -150,7 +139,7 @@ export default function Dashboard() {
               </div>
               <div className="dash-stats-mini__divider" />
               <div className="dash-stats-mini__item">
-                <span className="dash-stats-mini__val" style={{ color: "var(--green)" }}>{analyzedCount}</span>
+                <span className="dash-stats-mini__val" style={{ color: "var(--green)" }}>{totalAnalyzed}</span>
                 <span className="dash-stats-mini__label">🐐 analiz</span>
               </div>
             </div>
@@ -165,8 +154,8 @@ export default function Dashboard() {
         <main className="dash-main">
           <div className="dash-header">
             <h1>{t("title")}</h1>
-            {activities.length > 0 && (
-              <p className="dash-header__sub">{t("analyzed", { count: analyzedCount })}</p>
+            {total > 0 && (
+              <p className="dash-header__sub">{t("analyzed", { count: totalAnalyzed })}</p>
             )}
           </div>
 
@@ -179,29 +168,82 @@ export default function Dashboard() {
             </div>
           ) : (
             <>
-              <div className="activity-list">
+              <div className={`activity-list ${pageLoading ? "activity-list--loading" : ""}`}>
                 {activities.map((a, i) => (
                   <ActivityCard key={a.id} activity={a} locale={locale} index={i} />
                 ))}
               </div>
 
-              {/* Infinite scroll sentinel */}
-              <div ref={sentinelRef} className="dash-sentinel">
-                {loadingMore && (
-                  <div className="dash-load-more">
-                    <span className="goat-loader__emoji" style={{ fontSize: 28 }}>🐐</span>
-                    <span>{t("loadingMore")}</span>
-                  </div>
-                )}
-                {!hasMore && activities.length > 0 && (
-                  <p className="dash-end">{t("allLoaded")}</p>
-                )}
-              </div>
+              {totalPages > 1 && (
+                <Pagination
+                  page={page}
+                  totalPages={totalPages}
+                  disabled={pageLoading}
+                  onChange={goToPage}
+                />
+              )}
             </>
           )}
         </main>
       </div>
     </div>
+  );
+}
+
+/* ─── Pagination ─────────────────────────────────────────────────────────── */
+function pageNumbers(current: number, total: number): (number | "…")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages: (number | "…")[] = [1];
+  const left  = Math.max(2, current - 1);
+  const right = Math.min(total - 1, current + 1);
+  if (left > 2) pages.push("…");
+  for (let i = left; i <= right; i++) pages.push(i);
+  if (right < total - 1) pages.push("…");
+  pages.push(total);
+  return pages;
+}
+
+function Pagination({
+  page, totalPages, disabled, onChange,
+}: {
+  page: number; totalPages: number; disabled: boolean;
+  onChange: (p: number) => void;
+}) {
+  return (
+    <nav className="pagination" aria-label="Pagination">
+      <button
+        className="pagination__arrow"
+        onClick={() => onChange(page - 1)}
+        disabled={disabled || page === 1}
+        aria-label="Previous page"
+      >
+        <ChevronLeft size={16} />
+      </button>
+
+      {pageNumbers(page, totalPages).map((p, i) =>
+        p === "…" ? (
+          <span key={`gap-${i}`} className="pagination__gap">…</span>
+        ) : (
+          <button
+            key={p}
+            className={`pagination__num ${p === page ? "is-active" : ""}`}
+            onClick={() => onChange(p)}
+            disabled={disabled}
+          >
+            {p}
+          </button>
+        )
+      )}
+
+      <button
+        className="pagination__arrow"
+        onClick={() => onChange(page + 1)}
+        disabled={disabled || page === totalPages}
+        aria-label="Next page"
+      >
+        <ChevronRight size={16} />
+      </button>
+    </nav>
   );
 }
 

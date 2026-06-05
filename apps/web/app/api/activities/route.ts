@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import sql from "@/lib/db";
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 8;
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -12,12 +12,16 @@ export async function GET(req: NextRequest) {
   const page   = Math.max(1, parseInt(req.nextUrl.searchParams.get("page") ?? "1"));
   const offset = (page - 1) * PAGE_SIZE;
 
-  const userId = `(SELECT id FROM users WHERE strava_id = ${stravaId} LIMIT 1)`;
-
-  const [{ total }] = await sql`
-    SELECT COUNT(*)::int AS total FROM activities
-    WHERE user_id = (SELECT id FROM users WHERE strava_id = ${stravaId} LIMIT 1)
+  const [counts] = await sql`
+    SELECT
+      COUNT(DISTINCT a.id)::int AS total,
+      COUNT(DISTINCT a.id) FILTER (WHERE an.id IS NOT NULL)::int AS analyzed
+    FROM activities a
+    LEFT JOIN analyses an ON an.activity_id = a.id
+    WHERE a.user_id = (SELECT id FROM users WHERE strava_id = ${stravaId} LIMIT 1)
   `;
+  const total = counts?.total ?? 0;
+  const totalAnalyzed = counts?.analyzed ?? 0;
 
   const activities = await sql`
     SELECT
@@ -37,5 +41,11 @@ export async function GET(req: NextRequest) {
     LIMIT ${PAGE_SIZE} OFFSET ${offset}
   `;
 
-  return NextResponse.json({ activities, hasMore: activities.length === PAGE_SIZE, page, total });
+  return NextResponse.json({
+    activities,
+    page,
+    total,
+    totalAnalyzed,
+    totalPages: Math.max(1, Math.ceil(total / PAGE_SIZE)),
+  });
 }
