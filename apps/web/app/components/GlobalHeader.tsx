@@ -3,7 +3,7 @@
 import { useSession, signOut } from "next-auth/react";
 import { useLocale } from "next-intl";
 import Image from "next/image";
-import { LogOut } from "lucide-react";
+import { LogOut, Activity } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import LanguageToggle from "./LanguageToggle";
 
@@ -15,7 +15,8 @@ export default function GlobalHeader() {
   return (
     <header className="global-header">
       <a href={`/${locale}`} className="header-logo">
-        <span>⊕</span> DraftCoach
+        <span className="header-logo__mark"><Activity size={18} strokeWidth={2.5} /></span>
+        DraftCoach
       </a>
       <div className="header-actions">
         <ThemeToggle />

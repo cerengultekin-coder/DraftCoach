@@ -1,15 +1,3 @@
-export const SPORT_EMOJI: Record<string, string> = {
-  Ride: "🚴", VirtualRide: "🚴", EBikeRide: "🚴", Velomobile: "🚴", Handcycle: "🚴",
-  Run: "🏃", VirtualRun: "🏃", TrailRun: "🏃",
-  Swim: "🏊",
-  Walk: "🚶", Hike: "🥾",
-  WeightTraining: "🏋️", Workout: "💪", Crossfit: "💪", RockClimbing: "🧗",
-  Yoga: "🧘",
-  Rowing: "🚣", Kayaking: "🚣", Canoeing: "🚣", Surfing: "🏄", SUP: "🏄",
-  AlpineSki: "⛷️", BackcountrySki: "⛷️", CrossCountrySkiing: "⛷️",
-  Snowboard: "🏂", Snowshoe: "🥾", IceSkate: "⛸️",
-};
-
 export const SPORT_COLOR: Record<string, string> = {
   Ride: "#F97316", VirtualRide: "#F97316", EBikeRide: "#F97316", Velomobile: "#F97316", Handcycle: "#F97316",
   Run: "#EF4444", VirtualRun: "#EF4444", TrailRun: "#EF4444",
@@ -22,5 +10,4 @@ export const SPORT_COLOR: Record<string, string> = {
   Snowboard: "#60A5FA", Snowshoe: "#10B981", IceSkate: "#60A5FA",
 };
 
-export const sportEmoji = (type: string) => SPORT_EMOJI[type] ?? "🏅";
 export const sportColor = (type: string) => SPORT_COLOR[type] ?? "#4F8CFF";

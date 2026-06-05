@@ -142,14 +142,22 @@ html, body {
   font-family: 'Oswald', sans-serif;
   font-size: 18px;
   font-weight: 700;
+  letter-spacing: 0.5px;
   color: var(--text);
   text-decoration: none;
   transition: opacity 0.15s;
 }
-.header-logo:hover { opacity: 0.8; }
-.header-logo span {
-  font-size: 20px;
-  color: var(--blue);
+.header-logo:hover { opacity: 0.85; }
+.header-logo__mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, var(--blue), #6366F1);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(79,140,255,0.3);
 }
 
 .header-actions {
@@ -542,11 +550,15 @@ html, body {
   position: absolute;
   bottom: 0;
   right: 0;
-  font-size: 14px;
-  line-height: 1;
-  background: var(--bg-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: var(--orange);
+  color: #fff;
+  border: 2px solid var(--bg-2);
   border-radius: 50%;
-  padding: 1px;
 }
 .btn-signout {
   position: absolute;
@@ -719,9 +731,18 @@ html, body {
   align-items: center;
   padding: 18px 14px 18px 16px;
 }
-.activity-card__emoji {
-  font-size: 28px;
-  line-height: 1;
+.activity-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--sport-color) 12%, transparent);
+  transition: background 0.18s;
+}
+.activity-card:hover .activity-card__icon {
+  background: color-mix(in srgb, var(--sport-color) 18%, transparent);
 }
 
 .activity-card__center {
@@ -888,21 +909,18 @@ html, body {
 /* ── Sport watermark background ── */
 .sport-hero-bg {
   position: absolute;
-  right: 20px;
+  right: 28px;
   top: 50%;
-  transform: translateY(-50%);
+  transform: translateY(-50%) rotate(-8deg);
   pointer-events: none;
   user-select: none;
   z-index: 0;
+  color: var(--sport-color);
 }
 
-.sport-hero-bg__sport {
-  display: block;
-  font-size: 110px;
-  line-height: 1;
-  opacity: 0.07;
-  transform: rotate(-8deg);
-  filter: blur(0.5px);
+.sport-hero-bg__icon {
+  opacity: 0.1;
+  stroke-width: 1.5;
 }
 
 

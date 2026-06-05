@@ -7,7 +7,8 @@ import { useRouter } from "@/navigation";
 import { ArrowLeft, Activity, Clock, TrendingUp, Mountain, Heart, Zap } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { SportHeroBg, CoachGoatBadge } from "@/app/components/GoatArt";
-import { sportEmoji as getSportEmoji, sportColor } from "@/lib/sports";
+import SportIcon from "@/app/components/SportIcon";
+import { sportColor } from "@/lib/sports";
 
 const GOAT_MESSAGES: Record<string, string[]> = {
   tr: [
@@ -165,7 +166,6 @@ export default function ActivityDetailPage() {
   }
 
   const date  = new Date(activity.started_at).toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-  const emoji = getSportEmoji(activity.type);
   const hasAnalysis = activity.analyses.length > 0;
   const latestAnalysis = activity.analyses[0];
   const analysisLangMismatch = hasAnalysis && latestAnalysis.lang && latestAnalysis.lang !== locale;
@@ -181,7 +181,9 @@ export default function ActivityDetailPage() {
         <div className="detail-hero" style={{ "--sport-color": sportColor(activity.type) } as React.CSSProperties}>
           <SportHeroBg type={activity.type} />
           <div className="detail-hero__text">
-            <span className="detail-type-badge">{emoji} {activity.type}</span>
+            <span className="detail-type-badge">
+              <SportIcon type={activity.type} size={13} /> {activity.type}
+            </span>
             <h1 className="detail-title">{activity.name}</h1>
             <span className="detail-date">{date}</span>
           </div>

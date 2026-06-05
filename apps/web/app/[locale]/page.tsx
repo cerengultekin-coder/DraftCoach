@@ -24,7 +24,7 @@ export default function LandingPage() {
         <p className="hero__sub">{t("hero.sub")}</p>
         {status === "authenticated" ? (
           <a className="btn-connect-strava" href={`/${locale}/dashboard`}>
-            <span>⚡</span>
+            <Zap size={20} />
             {t("hero.dashboard")}
           </a>
         ) : (

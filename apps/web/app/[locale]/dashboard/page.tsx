@@ -3,10 +3,11 @@
 import { useTranslations, useLocale } from "next-intl";
 import { useSession, signOut } from "next-auth/react";
 import { useEffect, useState, useCallback } from "react";
-import { Activity, LogOut, Clock, TrendingUp, Heart, ChevronRight, ChevronLeft } from "lucide-react";
+import { Activity, LogOut, Clock, TrendingUp, Heart, ChevronRight, ChevronLeft, Link2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "@/navigation";
-import { sportEmoji, sportColor } from "@/lib/sports";
+import { sportColor } from "@/lib/sports";
+import SportIcon from "../../components/SportIcon";
 
 type ActivityRow = {
   id: string; strava_id: number; name: string; type: string;
@@ -115,7 +116,7 @@ export default function Dashboard() {
               {session?.user?.image && (
                 <Image src={session.user.image} alt="" width={92} height={92} className="dash-avatar" />
               )}
-              <span className="dash-user__strava-dot" title="Strava bağlı">🔗</span>
+              <span className="dash-user__strava-dot" title="Strava bağlı"><Link2 size={11} /></span>
             </div>
             <div className="dash-user__info">
               <span className="dash-user__name">{session?.user?.name}</span>
@@ -262,7 +263,9 @@ function ActivityCard({ activity: a, locale, index }: { activity: ActivityRow; l
     >
       <div className="activity-card__sport-bar" />
       <div className="activity-card__left">
-        <span className="activity-card__emoji">{sportEmoji(a.type)}</span>
+        <span className="activity-card__icon" style={{ color }}>
+          <SportIcon type={a.type} size={24} />
+        </span>
       </div>
       <div className="activity-card__center">
         <div className="activity-card__top">
