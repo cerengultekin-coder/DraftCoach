@@ -48,7 +48,7 @@ export default function Dashboard() {
 
   // Initial load (+ first-time import)
   useEffect(() => {
-    if (!(session?.user as any)?.stravaId) { setLoading(false); return; }
+    if (!session?.user?.stravaId) { setLoading(false); return; }
 
     async function init() {
       try {
@@ -257,7 +257,7 @@ function ActivityCard({ activity: a, locale, index }: { activity: ActivityRow; l
   return (
     <div
       className={`activity-card ${hasAnalysis ? "has-analysis" : ""}`}
-      style={{ "--sport-color": color, animationDelay: `${(index % 5) * 0.06}s` } as any}
+      style={{ "--sport-color": color, animationDelay: `${(index % 5) * 0.06}s` } as React.CSSProperties}
       onClick={() => router.push(`/activity/${a.id}`)}
     >
       <div className="activity-card__sport-bar" />

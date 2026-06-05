@@ -1,17 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import sql from "@/lib/db";
+import { getAuthedUser, ok, unauthorized, notFound } from "@/lib/api";
 
 export async function GET(
-  _req: NextRequest,
+  _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const session = await auth();
-  const stravaId = (session?.user as any)?.stravaId;
-  if (!stravaId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const user = await getAuthedUser();
+  if (!user) return unauthorized();
 
-  const rows = await sql`
+  const [activity] = await sql`
     SELECT
       a.id, a.strava_id, a.name, a.type,
       a.distance_km, a.duration_seconds, a.moving_seconds,
@@ -26,11 +24,10 @@ export async function GET(
       ) AS analyses
     FROM activities a
     LEFT JOIN analyses an ON an.activity_id = a.id
-    WHERE a.id = ${id}
-      AND a.user_id = (SELECT id FROM users WHERE strava_id = ${stravaId} LIMIT 1)
+    WHERE a.id = ${id} AND a.user_id = ${user.id}
     GROUP BY a.id
   `;
 
-  if (!rows.length) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json(rows[0]);
+  if (!activity) return notFound();
+  return ok(activity);
 }

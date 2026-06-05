@@ -1,39 +1,43 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import sql from "@/lib/db";
 import { translateCards } from "@/lib/groq";
+import { getAuthedUser, asLang, ok, unauthorized, notFound, badRequest, serverError } from "@/lib/api";
 
 export async function POST(
-  req: NextRequest,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const session = await auth();
-  const stravaId = (session?.user as any)?.stravaId;
-  if (!stravaId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const user = await getAuthedUser();
+  if (!user) return unauthorized();
 
-  const { lang, analysis_id } = await req.json().catch(() => ({}));
-  if (!lang) return NextResponse.json({ error: "lang required" }, { status: 400 });
+  const body = await req.json().catch(() => ({}));
+  const lang = asLang(body.lang);
+  const analysisId = body.analysis_id;
+  if (!analysisId) return badRequest("analysis_id required");
 
-  const [userRow] = await sql`SELECT id FROM users WHERE strava_id = ${stravaId} LIMIT 1`;
-  if (!userRow) return NextResponse.json({ error: "User not found" }, { status: 404 });
-
+  // Verify ownership and fetch the source analysis in one query
   const [source] = await sql`
     SELECT an.id, an.cards, an.ai_model
     FROM analyses an
     JOIN activities a ON a.id = an.activity_id
-    WHERE an.id = ${analysis_id} AND a.id = ${id} AND a.user_id = ${userRow.id}
+    WHERE an.id = ${analysisId} AND a.id = ${id} AND a.user_id = ${user.id}
     LIMIT 1
   `;
-  if (!source) return NextResponse.json({ error: "Analysis not found" }, { status: 404 });
+  if (!source) return notFound("Analysis not found");
 
-  const cards = await translateCards(source.cards, lang);
+  let cards;
+  try {
+    cards = await translateCards(source.cards, lang);
+  } catch (err) {
+    console.error("[translate] Groq error:", err);
+    return serverError("Translation failed");
+  }
 
   const [saved] = await sql`
     INSERT INTO analyses (activity_id, user_id, cards, ai_model, lang)
-    VALUES (${id}, ${userRow.id}, ${JSON.stringify(cards)}, ${source.ai_model}, ${lang})
+    VALUES (${id}, ${user.id}, ${JSON.stringify(cards)}, ${source.ai_model}, ${lang})
     RETURNING id, cards, ai_model, lang, created_at
   `;
 
-  return NextResponse.json({ id: saved.id, cards, ai_model: saved.ai_model, lang: saved.lang });
+  return ok({ id: saved.id, cards, ai_model: saved.ai_model, lang: saved.lang });
 }

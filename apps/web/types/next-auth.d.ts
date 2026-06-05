@@ -1,5 +1,4 @@
-import "next-auth";
-import "next-auth/jwt";
+import { DefaultSession } from "next-auth";
 
 declare module "next-auth" {
   interface User {
@@ -7,11 +6,8 @@ declare module "next-auth" {
   }
   interface Session {
     user: {
-      name?: string | null;
-      email?: string | null;
-      image?: string | null;
       stravaId?: number;
-    };
+    } & DefaultSession["user"];
     accessToken?: string;
   }
 }

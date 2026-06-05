@@ -1,15 +1,14 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextRequest } from "next/server";
 import sql from "@/lib/db";
+import { getAuthedUser, ok, unauthorized } from "@/lib/api";
 
 const PAGE_SIZE = 8;
 
 export async function GET(req: NextRequest) {
-  const session = await auth();
-  const stravaId = (session?.user as any)?.stravaId;
-  if (!stravaId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const user = await getAuthedUser();
+  if (!user) return unauthorized();
 
-  const page   = Math.max(1, parseInt(req.nextUrl.searchParams.get("page") ?? "1"));
+  const page   = Math.max(1, parseInt(req.nextUrl.searchParams.get("page") ?? "1", 10) || 1);
   const offset = (page - 1) * PAGE_SIZE;
 
   const [counts] = await sql`
@@ -18,7 +17,7 @@ export async function GET(req: NextRequest) {
       COUNT(DISTINCT a.id) FILTER (WHERE an.id IS NOT NULL)::int AS analyzed
     FROM activities a
     LEFT JOIN analyses an ON an.activity_id = a.id
-    WHERE a.user_id = (SELECT id FROM users WHERE strava_id = ${stravaId} LIMIT 1)
+    WHERE a.user_id = ${user.id}
   `;
   const total = counts?.total ?? 0;
   const totalAnalyzed = counts?.analyzed ?? 0;
@@ -35,13 +34,13 @@ export async function GET(req: NextRequest) {
       ) AS analyses
     FROM activities a
     LEFT JOIN analyses an ON an.activity_id = a.id
-    WHERE a.user_id = (SELECT id FROM users WHERE strava_id = ${stravaId} LIMIT 1)
+    WHERE a.user_id = ${user.id}
     GROUP BY a.id
     ORDER BY a.started_at DESC
     LIMIT ${PAGE_SIZE} OFFSET ${offset}
   `;
 
-  return NextResponse.json({
+  return ok({
     activities,
     page,
     total,

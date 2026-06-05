@@ -73,9 +73,9 @@ export async function POST(req: NextRequest) {
     triggerAnalysis(saved.id, user.id, activityData).catch(console.error);
     return NextResponse.json({ ok: true, activity_id: saved.id });
 
-  } catch (err: any) {
-    console.error("[webhook] Error:", err.message);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err) {
+    console.error("[webhook] Error:", err);
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
 
