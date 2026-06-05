@@ -10,7 +10,7 @@ import LanguageToggle from "./LanguageToggle";
 export default function GlobalHeader() {
   const locale = useLocale();
   const { data: session, status } = useSession();
-  const isAuth = status === "authenticated" && session?.user;
+  const user = status === "authenticated" ? session?.user : null;
 
   return (
     <header className="global-header">
@@ -20,18 +20,18 @@ export default function GlobalHeader() {
       <div className="header-actions">
         <ThemeToggle />
         <LanguageToggle />
-        {isAuth && (
+        {user && (
           <div className="header-user">
-            {session.user.image && (
+            {user.image && (
               <Image
-                src={session.user.image}
+                src={user.image}
                 alt=""
                 width={30}
                 height={30}
                 className="header-user__avatar"
               />
             )}
-            <span className="header-user__name">{session.user.name}</span>
+            <span className="header-user__name">{user.name}</span>
             <button
               className="header-user__logout"
               onClick={() => signOut({ callbackUrl: `/${locale}/` })}
