@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import sql from "./db";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true,
   providers: [
     {
       id: "strava",
