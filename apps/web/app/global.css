@@ -158,6 +158,53 @@ html, body {
   gap: 12px;
 }
 
+.header-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 6px 5px 10px;
+  background: var(--bg-3);
+  border: 1px solid var(--border-2);
+  border-radius: 99px;
+  margin-left: 4px;
+}
+.header-user__avatar {
+  border-radius: 50%;
+  border: 2px solid var(--orange);
+  flex-shrink: 0;
+}
+.header-user__name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  max-width: 130px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.header-user__logout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text-4);
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.header-user__logout:hover {
+  background: rgba(239,68,68,0.1);
+  color: var(--red);
+}
+
+@media (max-width: 640px) {
+  .header-user__name { display: none; }
+}
+
 /* ═══════════════════════════════════════════
    INACTIVITY WARNING BANNER
 ═══════════════════════════════════════════ */
