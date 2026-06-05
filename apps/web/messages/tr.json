@@ -1,4 +1,8 @@
 {
+  "meta": {
+    "title": "DraftCoach — AI Spor Koçu",
+    "description": "Strava'na bağlan, her aktiviteden sonra anında AI koçluk al. Performans, toparlanma, beslenme ve teknik üzerine kişisel içgörüler — Coach GOAT ile."
+  },
   "landing": {
     "nav": {
       "connect": "Strava'ya Bağlan"

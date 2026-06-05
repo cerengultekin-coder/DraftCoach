@@ -1,4 +1,8 @@
 {
+  "meta": {
+    "title": "DraftCoach — AI Sports Coach",
+    "description": "Connect Strava and get instant AI coaching after every activity. Personalized insights on performance, recovery, nutrition and technique — powered by Coach GOAT."
+  },
   "landing": {
     "nav": {
       "connect": "Connect Strava"

@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Oswald, Lexend, Fira_Code } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
-import { getMessages } from "next-intl/server";
+import { getMessages, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import Providers from "../providers";
@@ -13,22 +13,53 @@ const oswald   = Oswald({ subsets: ["latin"], variable: "--font-oswald", display
 const lexend   = Lexend({ subsets: ["latin"], variable: "--font-lexend", display: "swap" });
 const firaCode = Fira_Code({ subsets: ["latin"], variable: "--font-fira", display: "swap" });
 
-export const metadata: Metadata = {
-  title: "DraftCoach — AI Sports Coach",
-  description: "Connect your Strava and get instant AI-powered coaching after every activity. Personalized insights on performance, recovery, nutrition and training.",
-  keywords: ["sports coach", "strava", "AI coach", "fitness analytics", "training"],
-  openGraph: {
-    title: "DraftCoach — AI Sports Coach",
-    description: "Connect your Strava and get instant AI-powered coaching after every activity.",
-    type: "website",
-    url: "https://draft-coach.vercel.app",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "DraftCoach — AI Sports Coach",
-    description: "Connect your Strava and get instant AI-powered coaching after every activity.",
-  },
+const SITE_URL = process.env.NEXTAUTH_URL ?? "https://draft-coach-mu.vercel.app";
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F2F5FC" },
+    { media: "(prefers-color-scheme: dark)", color: "#0B1220" },
+  ],
 };
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "meta" });
+  const title = t("title");
+  const description = t("description");
+  const ogImage = "/screenshots/landing-dark.png";
+
+  return {
+    metadataBase: new URL(SITE_URL),
+    title,
+    description,
+    keywords: ["sports coach", "strava", "AI coach", "fitness analytics", "running", "cycling", "training"],
+    authors: [{ name: "Ceren Gültekin" }],
+    alternates: {
+      canonical: `/${locale}`,
+      languages: { tr: "/tr", en: "/en" },
+    },
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      url: `/${locale}`,
+      siteName: "DraftCoach",
+      locale: locale === "tr" ? "tr_TR" : "en_US",
+      images: [{ url: ogImage, width: 1440, height: 900, alt: "DraftCoach" }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImage],
+    },
+  };
+}
 
 export default async function LocaleLayout({
   children,
