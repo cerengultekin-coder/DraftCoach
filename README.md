@@ -3,9 +3,8 @@
 > Connect Strava once. After every activity, Coach GOAT analyzes your data and delivers personalized coaching — performance, recovery, nutrition, technique.
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript)
-![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python)
+![Groq](https://img.shields.io/badge/Groq-Llama_3.3_70B-F55036)
 ![License](https://img.shields.io/badge/license-All%20Rights%20Reserved-red)
 
 ---
@@ -43,7 +42,7 @@ Strava Webhook  ──►  Next.js API Route
         │                    │
         │            Save to Neon DB
         │                    │
-        │            Call FastAPI (Groq)
+        │            Call Groq (Llama 3.3 70B)
         │                    │
         │            AI Coach generates cards
         │                    │
@@ -53,9 +52,9 @@ Strava Webhook  ──►  Next.js API Route
 
 1. User connects Strava via OAuth
 2. Strava sends a webhook event when a new activity is created
-3. The Next.js webhook handler fetches full activity data from Strava API
+3. The Next.js webhook handler verifies the signature and fetches full activity data
 4. Activity is saved to Neon PostgreSQL
-5. FastAPI calls Groq (llama-3.3-70b) with sport-specific prompts
+5. Groq (Llama 3.3 70B) is called directly with sport-specific prompts
 6. Personalized coaching cards are saved and displayed on the dashboard
 
 ---
@@ -64,13 +63,14 @@ Strava Webhook  ──►  Next.js API Route
 
 - **Automatic Analysis** — No manual action needed; webhook triggers on every Strava activity
 - **Multi-Sport Support** — Cycling, running, swimming, hiking, strength training and more — each with a tailored AI coach persona
-- **Coach GOAT** — AI coach powered by Groq (llama-3.3-70b-versatile) with sport-specific coaching
+- **Coach GOAT** — AI coach powered by Groq (Llama 3.3 70B) with sport-specific coaching
 - **Coaching Cards** — Performance, recovery, nutrition, technique, next training plan
-- **Dark / Light Mode** — Full theme support with smooth transitions, persists across navigation
+- **Bilingual Output** — Analyze in TR or EN; translate existing analyses without re-spending quota
+- **Per-User Rate Limiting** — Daily analysis cap enforced at the database level
+- **Dark / Light Mode** — Full theme support, persists across navigation and locale changes
 - **TR / EN Language** — Complete Turkish and English UI with next-intl, URL-based routing (`/tr/`, `/en/`)
-- **Session Security** — Auto logout after 15 min inactivity with green/orange/red warning banners at 10/5/1 min
-- **Neon PostgreSQL** — Serverless database, never pauses (unlike Supabase free tier)
-- **Strava OAuth** — Secure authentication with token refresh handling
+- **Session Security** — Auto logout after 15 min inactivity with staged warning banners
+- **Neon PostgreSQL** — Serverless database, never pauses
 
 ---
 
@@ -78,13 +78,14 @@ Strava Webhook  ──►  Next.js API Route
 
 | Layer | Technology |
 |---|---|
-| Frontend | Next.js 16 (Turbopack), TypeScript |
+| Framework | Next.js 16 (App Router, Turbopack), TypeScript |
 | Internationalisation | next-intl (URL prefix routing, TR/EN) |
 | Authentication | NextAuth v5 + Strava OAuth 2.0 |
-| Backend | FastAPI (Python 3.12) |
-| AI | Groq API — llama-3.3-70b-versatile |
+| AI | Groq API — Llama 3.3 70B (called directly from route handlers) |
 | Database | Neon (serverless PostgreSQL) |
-| Deployment | Vercel (frontend) + ngrok (backend tunnel) |
+| Deployment | Vercel |
+
+> The entire backend runs as Next.js route handlers — no separate server to deploy or keep warm.
 
 ---
 
@@ -92,35 +93,29 @@ Strava Webhook  ──►  Next.js API Route
 
 ```
 draftcoach/
-├── apps/
-│   ├── api/                          # FastAPI backend
-│   │   ├── main.py                   # AI coach endpoint, Groq streaming, usage tracking
-│   │   └── requirements.txt
-│   └── web/                          # Next.js frontend
-│       ├── app/
-│       │   ├── [locale]/             # TR / EN routing
-│       │   │   ├── layout.tsx        # Root layout with providers
-│       │   │   ├── page.tsx          # Landing page
-│       │   │   └── dashboard/
-│       │   │       └── page.tsx      # Activity dashboard
-│       │   ├── api/
-│       │   │   ├── activities/       # Activities API (auth-gated)
-│       │   │   └── webhook/strava/   # Strava webhook handler
-│       │   └── components/
-│       │       ├── ThemeProvider.tsx # Dark/light theme context
-│       │       ├── ThemeToggle.tsx
-│       │       ├── LanguageToggle.tsx
-│       │       └── InactivityGuard.tsx  # Auto-logout after 15 min
-│       ├── i18n/
-│       │   ├── routing.ts
-│       │   └── request.ts
-│       ├── messages/
-│       │   ├── tr.json
-│       │   └── en.json
-│       └── lib/
-│           ├── auth.ts               # NextAuth + Strava config
-│           └── db.ts                 # Neon SQL client
-└── schema.sql                        # Database schema (users, activities, analyses)
+└── apps/web/                          # Next.js full-stack app
+    ├── app/
+    │   ├── [locale]/                  # TR / EN routing
+    │   │   ├── layout.tsx             # Root layout with providers
+    │   │   ├── page.tsx               # Landing page
+    │   │   ├── dashboard/page.tsx     # Paginated activity list
+    │   │   └── activity/[id]/page.tsx # Activity detail + Coach GOAT
+    │   ├── api/
+    │   │   ├── activities/            # List, import, get, analyze, translate
+    │   │   └── webhook/strava/        # Strava webhook handler
+    │   └── components/
+    │       ├── GlobalHeader.tsx       # Header + user menu
+    │       ├── ThemeProvider.tsx      # Dark/light theme context
+    │       └── InactivityGuard.tsx    # Auto-logout after inactivity
+    ├── lib/
+    │   ├── auth.ts                    # NextAuth + Strava config
+    │   ├── db.ts                      # Neon SQL client
+    │   ├── groq.ts                    # AI prompts, analyze, translate
+    │   ├── strava.ts                  # Token refresh helper
+    │   └── sports.ts                  # Sport emoji/color mapping
+    ├── i18n/                          # next-intl routing + request config
+    └── messages/                      # tr.json, en.json
+└── schema.sql                         # users, activities, analyses tables
 ```
 
 ---
@@ -129,37 +124,24 @@ draftcoach/
 
 ### Prerequisites
 
-- Python 3.12+
 - Node.js 18+
 - [Groq API Key](https://console.groq.com) — free
 - [Neon](https://neon.tech) account — free, never pauses
 - Strava API app ([developers.strava.com](https://developers.strava.com))
 
-### 1. Database Setup
+### 1. Database
 
 Run `schema.sql` in your Neon project's SQL Editor to create the `users`, `activities`, and `analyses` tables.
 
-### 2. Backend
-
-```bash
-cd apps/api
-pip install -r requirements.txt
-uvicorn main:app --reload
-# Runs on http://localhost:8000
-```
-
-### 3. Frontend
+### 2. Install & run
 
 ```bash
 cd apps/web
 npm install
-npm run dev
-# Runs on http://localhost:3000
+npm run dev   # http://localhost:3000
 ```
 
-### 4. Environment Variables
-
-Create `apps/web/.env.local`:
+### 3. Environment Variables (`apps/web/.env.local`)
 
 ```env
 NEXTAUTH_SECRET=your_secret_here
@@ -172,20 +154,16 @@ STRAVA_WEBHOOK_VERIFY_TOKEN=your_verify_token
 DATABASE_URL=postgresql://...your_neon_connection_string...
 
 GROQ_API_KEY=gsk_...
-INTERNAL_API_URL=http://localhost:8000
+USER_DAILY_LIMIT=5
 ```
 
-### 5. Strava Webhook (local dev)
+### 4. Strava Webhook (production)
 
 ```bash
-# Expose backend with ngrok
-ngrok http 8000
-
-# Register webhook with Strava
 curl -X POST https://www.strava.com/api/v3/push_subscriptions \
   -F client_id=YOUR_CLIENT_ID \
   -F client_secret=YOUR_CLIENT_SECRET \
-  -F callback_url=https://YOUR_NGROK_URL/api/webhook/strava \
+  -F callback_url=https://YOUR_DOMAIN/api/webhook/strava \
   -F verify_token=YOUR_VERIFY_TOKEN
 ```
 
@@ -203,7 +181,7 @@ Using, copying, or distributing this code without explicit written permission fr
 ## Author
 
 **Ceren Gültekin**
-[LinkedIn](https://www.linkedin.com/in/ceren-g%C3%BCltekin-2a70841b3/)
+[LinkedIn](https://www.linkedin.com/in/ceren-g%C3%BCltekin-2a70841b3/) · [GitHub](https://github.com/cerengultekin-coder/DraftCoach)
 
 ---
 
